@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="custom_components/ford_assistant/brand/icon@2x.png" alt="Ford Assistant" width="160">
+</p>
+
 # Ford Assistant
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/)
