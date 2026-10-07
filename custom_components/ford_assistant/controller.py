@@ -68,6 +68,7 @@ from .logic import (
     active_indicators,
     countdown_minutes,
     notify_service_name,
+    open_doors,
     parse_action,
     percent_alert,
     rain_expected,
@@ -96,6 +97,8 @@ class FordAssistantController:
         self.numbers: dict[str, float] = {k: s.default for k, s in NUMBERS.items()}
         self.times: dict[str, time] = {k: time.fromisoformat(v) for k, v in TIMES.items()}
         self.latched: dict[str, bool] = {}
+        # Notification kinds currently showing on phones (cleared when resolved).
+        self.shown: set[str] = set()
         self.last_event: dict[str, Any] | None = None
         self._store: Store[dict[str, Any]] = Store(
             hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}"
@@ -135,6 +138,7 @@ class FordAssistantController:
                     except (TypeError, ValueError):
                         pass
             self.latched = {k: bool(v) for k, v in stored.get("latched", {}).items()}
+            self.shown = set(stored.get("shown", []))
         self.entities = resolve_entities(self.hass, self.vin)
 
     @callback
@@ -154,6 +158,7 @@ class FordAssistantController:
             "tires": self._on_tires,
             "indicators": self._on_indicators,
             "tracker": self._on_tracker,
+            "remote_start": self._on_remote_start,
         }
         for role, handler in watch.items():
             if role in e:
@@ -181,6 +186,8 @@ class FordAssistantController:
             self._start_timer("auto_lock", self._auto_lock_delay, self._check_auto_lock)
         if self._windows_open():
             self._start_timer("windows", WINDOW_OPEN_DELAY, self._check_windows)
+        if self._doors_open() and self._ignition_off():
+            self._start_timer("door_open", self._door_open_delay, self._check_door_open)
 
     @callback
     def async_stop(self) -> None:
@@ -220,6 +227,7 @@ class FordAssistantController:
             "numbers": self.numbers,
             "times": {k: v.isoformat() for k, v in self.times.items()},
             "latched": self.latched,
+            "shown": sorted(self.shown),
         }
 
     @callback
@@ -273,6 +281,13 @@ class FordAssistantController:
     def _ignition_off(self) -> bool:
         value = self._value("ignition")
         return value is not None and value.upper() == "OFF"
+
+    def _doors_open(self) -> bool:
+        return self._value("doors") == "Open"
+
+    @property
+    def _door_open_delay(self) -> float:
+        return self.numbers["door_open_delay"] * 60
 
     def _windows_open(self) -> bool:
         return self._value("windows") not in (*BAD_STATES, "Closed")
@@ -338,7 +353,11 @@ class FordAssistantController:
         if unsub := self._time_unsubs.pop(key, None):
             unsub()
         at = self.times[key]
-        handler = self._precondition if key == "precondition_time" else self._work_prompt
+        handler = {
+            "precondition_time": self._precondition,
+            "work_prompt_time": self._work_prompt,
+            "night_lock_time": self._night_lock,
+        }[key]
 
         async def _run(_now: datetime) -> None:
             await handler()
@@ -349,9 +368,13 @@ class FordAssistantController:
 
     def _latch(self, key: str, fire_and_latch: tuple[bool, bool]) -> bool:
         fire, latched = fire_and_latch
-        if self.latched.get(key, False) != latched:
+        was = self.latched.get(key, False)
+        if was != latched:
             self.latched[key] = latched
             self._save()
+        if was and not latched:
+            # The problem cleared: take the stale alert off the phones.
+            self._clear(key)
         return fire
 
     # ------------------------------------------------------- notifications
@@ -412,7 +435,38 @@ class FordAssistantController:
             except HomeAssistantError as err:
                 _LOGGER.warning("Could not notify via %s: %s", service, err)
 
+        self.shown.add(kind)
+        self._save()
         self._record(kind, title, message)
+
+    @callback
+    def _clear(self, *kinds: str) -> None:
+        """Remove resolved notifications from the phones, if any are showing."""
+        showing = [kind for kind in kinds if kind in self.shown]
+        if not showing:
+            return
+        self.shown.difference_update(showing)
+        self._save()
+        if self.features["clear_resolved"]:
+            self.hass.async_create_task(self._send_clear(showing))
+
+    async def _send_clear(self, kinds: list[str]) -> None:
+        for service in self._notify_services():
+            if not self.hass.services.has_service("notify", service):
+                continue
+            for kind in kinds:
+                try:
+                    await self.hass.services.async_call(
+                        "notify",
+                        service,
+                        {
+                            "message": "clear_notification",
+                            "data": {"tag": f"ford-{kind}-{self.vin}"},
+                        },
+                        blocking=True,
+                    )
+                except HomeAssistantError as err:
+                    _LOGGER.debug("Could not clear %s via %s: %s", kind, service, err)
 
     @callback
     def _record(self, kind: str, title: str, message: str = "") -> None:
@@ -470,17 +524,50 @@ class FordAssistantController:
                 self.numbers["garage_close_delay"] * 60,
                 self._check_garage_close,
             )
+            if self._doors_open():
+                self._start_timer("door_open", self._door_open_delay, self._check_door_open)
         elif not off:
             self._cancel_timer("garage_close")
+            self._cancel_timer("door_open")
+            # Back in the vehicle: earlier notifications are no longer news.
+            self._clear("start", "autolock", "nightlock", "garage")
 
     @callback
     def _on_doors(self, event: Event[EventStateChangedData]) -> None:
         new = event.data["new_state"]
-        # Doors just closed while unlocked: restart the wait.
-        if new is not None and new.state == "Closed" and self._is(
-            self.entities.get("lock"), "unlocked"
-        ):
-            self._start_timer("auto_lock", self._auto_lock_delay, self._check_auto_lock)
+        if new is None or new.state in BAD_STATES:
+            return
+        if new.state == "Closed":
+            self._cancel_timer("door_open")
+            self._latch("door", (False, False))
+            # Doors just closed while unlocked: restart the wait.
+            if self._is(self.entities.get("lock"), "unlocked"):
+                self._start_timer("auto_lock", self._auto_lock_delay, self._check_auto_lock)
+        elif new.state == "Open" and self._ignition_off() and "door_open" not in self._timers:
+            self._start_timer("door_open", self._door_open_delay, self._check_door_open)
+
+    def _open_door_text(self) -> tuple[str, bool]:
+        """Which doors are open, and whether that's more than one."""
+        state = self._state("doors")
+        doors = open_doors(state.attributes) if state else []
+        if not doors:
+            return "A door", False
+        if len(doors) == 1:
+            return doors[0], False
+        return ", ".join(doors[:-1]) + " and " + doors[-1].lower(), True
+
+    async def _check_door_open(self) -> None:
+        if not (self.features["door_open_alert"] and self._doors_open() and self._ignition_off()):
+            return
+        if not self._latch("door", (True, True)):
+            return
+        minutes = round(self.numbers["door_open_delay"])
+        doors, plural = self._open_door_text()
+        await self._notify(
+            "door",
+            f"🚪 {self.name} door open",
+            f"{doors} {'have' if plural else 'has'} been open for {minutes} minutes.",
+        )
 
     def _walked_away(self) -> bool:
         limit = self.numbers["walk_away_distance"]
@@ -527,6 +614,29 @@ class FordAssistantController:
                 actions=["HONK"] if "honk" in self.entities else None,
             )
 
+    async def _night_lock(self) -> None:
+        if not self.features["night_lock"]:
+            return
+        if not self._is(self.entities.get("lock"), "unlocked") or not self._ignition_off():
+            return
+        if self._doors_open():
+            # Can't lock with a door open; say so (once) instead.
+            if self._latch("door", (True, True)):
+                doors, plural = self._open_door_text()
+                await self._notify(
+                    "door",
+                    f"🚪 {self.name} couldn't lock for the night",
+                    f"{doors} {'are' if plural else 'is'} open.",
+                )
+            return
+        if await self._call("lock", "lock", "lock"):
+            await self._notify(
+                "nightlock",
+                f"{self.name} locked for the night",
+                "It was still unlocked, so Home Assistant locked it.",
+                actions=["HONK"] if "honk" in self.entities else None,
+            )
+
     # ------------------------------------------------- remote start features
 
     async def _precondition(self) -> None:
@@ -566,6 +676,12 @@ class FordAssistantController:
         )
 
     @callback
+    def _on_remote_start(self, event: Event[EventStateChangedData]) -> None:
+        new, old = event.data["new_state"], event.data["old_state"]
+        if new is not None and new.state == "off" and old is not None and old.state == "on":
+            self._clear("start")
+
+    @callback
     def _on_countdown(self, event: Event[EventStateChangedData]) -> None:
         new = event.data["new_state"]
         if new is None:
@@ -598,7 +714,10 @@ class FordAssistantController:
         if new is None or not self.features["alarm_alert"]:
             return
         normal = self.options.get(CONF_ALARM_NORMAL_STATES) or DEFAULT_ALARM_NORMAL_STATES
-        if new.state in BAD_STATES or new.state in normal:
+        if new.state in normal:
+            self._clear("alarm")
+            return
+        if new.state in BAD_STATES:
             return
         if old is not None and old.state == new.state:
             return

@@ -10,10 +10,12 @@
 A companion to the [Ford integration](https://github.com/marq24/ha-fordpass) for Home Assistant. It turns your Ford or Lincoln's entities into ready-to-use features, each one a switch you can flip from a dashboard or your own automations.
 
 - **Auto-lock away from home.** Locks the doors if they're left unlocked with the ignition off and doors closed, optionally waiting until your phone has walked away.
+- **Lock at night.** Locks it at bedtime wherever it's parked, or tells you which door is open.
 - **Morning pre-conditioning.** Remote starts at a set time on chosen days when it's colder or hotter than your limits and there's enough fuel.
 - **Leaving-work start prompt.** A notification with a **Start** button at the end of your workday.
 - **Auto-extend remote start.** Presses Extend when the remote start timer runs low.
-- **Alerts.** Alarm (critical), windows open with rain coming, low fuel, oil change (adds a to-do item), 12V battery, tire pressure, and dashboard warning lights. Each alert fires once and re-arms only after the problem clears, so you aren't spammed.
+- **Alerts.** Alarm (critical), windows open with rain coming, low fuel, oil change (adds a to-do item), 12V battery, tire pressure, and dashboard warning lights. Each alert fires once, re-arms only after the problem clears, and is removed from your phone when it's resolved.
+- **Door open alert.** Tells you which door or the hood has been left open.
 - **Garage door.** Opens when the vehicle arrives home and closes a while after you park.
 - **Actionable notifications.** **Lock**, **Honk & Flash**, **Start** and **Stop** buttons right in the notification.
 
@@ -51,9 +53,9 @@ Ford Assistant's entities appear on your vehicle's existing device page, next to
 
 | Type | Entities |
 | --- | --- |
-| Switch | One per feature: auto-lock, pre-conditioning, work prompt, auto-extend, each alert, garage open and garage close |
-| Number | Auto-lock delay, walk-away distance, cold and hot start limits, minimum fuel to start, extend threshold, fuel / oil / 12V battery thresholds, garage close delay |
-| Time | Pre-conditioning time, leaving-work prompt time |
+| Switch | One per feature: auto-lock, lock at night, pre-conditioning, work prompt, auto-extend, each alert, garage open and garage close, and clearing resolved notifications |
+| Number | Auto-lock delay, walk-away distance, cold and hot start limits, minimum fuel to start, extend threshold, fuel / oil / 12V battery thresholds, door open alert delay, garage close delay |
+| Time | Pre-conditioning time, leaving-work prompt time, night lock time |
 | Sensor | Last event: the most recent alert or action, with its message and time |
 
 Temperature limits use the units of the vehicle's outdoor temperature sensor. The walk-away distance uses your Home Assistant unit system (miles or kilometers).
@@ -77,7 +79,7 @@ actions:
       message: "{{ trigger.event.data.message }}"
 ```
 
-Event data: `vin`, `config_entry_id`, `type`, `title`, `message`. Types: `autolock`, `start`, `extend`, `alarm`, `windows`, `fuel`, `oil`, `battery`, `tires`, `indicators`, `garage_open`, `garage`, and `command_lock` / `command_honk` / `command_start` / `command_stop` for notification buttons.
+Event data: `vin`, `config_entry_id`, `type`, `title`, `message`. Types: `autolock`, `nightlock`, `door`, `start`, `extend`, `alarm`, `windows`, `fuel`, `oil`, `battery`, `tires`, `indicators`, `garage_open`, `garage`, and `command_lock` / `command_honk` / `command_start` / `command_stop` for notification buttons.
 
 ## Coming from the blueprint
 

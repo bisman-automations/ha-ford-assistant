@@ -111,6 +111,16 @@ def active_indicators(attributes: Mapping[str, Any]) -> list[str]:
     return names
 
 
+def open_doors(attributes: Mapping[str, Any]) -> list[str]:
+    """Readable names of the doors (and hood) that are open."""
+    closed = {"CLOSED", "INVALID", "UNKNOWN", "UNSUPPORTED"}
+    return [
+        humanize(key)
+        for key, value in attributes.items()
+        if isinstance(value, str) and value.upper() not in closed
+    ]
+
+
 def humanize(key: str) -> str:
     """camelCase -> 'Camel case'."""
     words = re.sub(r"(?<!^)(?=[A-Z])", " ", key).lower()

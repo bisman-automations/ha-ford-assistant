@@ -215,3 +215,85 @@ async def test_options_flow(hass: HomeAssistant, ford: str) -> None:
     await hass.async_block_till_done()
     assert entry.options["work_prompt_days"] == ["tue", "wed", "thu"]
     assert entry.runtime_data.options["precondition_days"] == ["sat", "sun"]
+
+
+def _clears(calls) -> list[str]:
+    return [c.data["data"]["tag"] for c in calls if c.data["message"] == "clear_notification"]
+
+
+async def test_night_lock(hass: HomeAssistant, ford: str) -> None:
+    hass.states.async_set(_entity_id("tracker"), "home", {**HOME, "gps_accuracy": 5})
+    lock_calls = async_mock_service(hass, "lock", "lock")
+    notify_calls = async_mock_service(hass, "notify", "mobile_app_my_phone")
+    entry = await _setup(hass, ford)
+    await entry.runtime_data._night_lock()
+    await hass.async_block_till_done()
+    assert len(lock_calls) == 1
+    assert notify_calls[-1].data["title"].endswith("locked for the night")
+
+
+async def test_night_lock_door_open(hass: HomeAssistant, ford: str) -> None:
+    hass.states.async_set(_entity_id("tracker"), "home", {**HOME, "gps_accuracy": 5})
+    hass.states.async_set(_entity_id("doors"), "Open", {"rearLeft": "OPEN", "hood": "OPEN"})
+    lock_calls = async_mock_service(hass, "lock", "lock")
+    notify_calls = async_mock_service(hass, "notify", "mobile_app_my_phone")
+    entry = await _setup(hass, ford)
+    await entry.runtime_data._night_lock()
+    await hass.async_block_till_done()
+    assert not lock_calls
+    assert notify_calls[-1].data["message"] == "Rear left and hood are open."
+
+
+async def test_door_open_alert_and_clear(hass: HomeAssistant, ford: str) -> None:
+    async_mock_service(hass, "lock", "lock")
+    notify_calls = async_mock_service(hass, "notify", "mobile_app_my_phone")
+    await _setup(hass, ford)
+
+    hass.states.async_set(_entity_id("doors"), "Open", {"driverFront": "OPEN", "hood": "CLOSED"})
+    await hass.async_block_till_done()
+    for minutes in (11, 22):
+        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=minutes))
+        await hass.async_block_till_done()
+
+    door = [c for c in notify_calls if c.data.get("title", "").startswith("🚪")]
+    assert len(door) == 1
+    assert door[0].data["message"] == "Driver front has been open for 10 minutes."
+
+    hass.states.async_set(_entity_id("doors"), "Closed", {})
+    await hass.async_block_till_done()
+    assert _clears(notify_calls) == [f"ford-door-{VIN}"]
+
+
+async def test_fuel_alert_clears_on_refuel(hass: HomeAssistant, ford: str) -> None:
+    async_mock_service(hass, "lock", "lock")
+    notify_calls = async_mock_service(hass, "notify", "mobile_app_my_phone")
+    await _setup(hass, ford)
+    hass.states.async_set(_entity_id("fuel"), "10", {})
+    await hass.async_block_till_done()
+    hass.states.async_set(_entity_id("fuel"), "90", {})
+    await hass.async_block_till_done()
+    assert _clears(notify_calls) == [f"ford-fuel-{VIN}"]
+
+
+async def test_start_prompt_clears(hass: HomeAssistant, ford: str) -> None:
+    notify_calls = async_mock_service(hass, "notify", "mobile_app_my_phone")
+    entry = await _setup(hass, ford)
+    await entry.runtime_data._notify("start", "Start?", "Tap Start", actions=["START"])
+    hass.states.async_set(_entity_id("remote_start"), "on")
+    await hass.async_block_till_done()
+    assert not _clears(notify_calls)
+    hass.states.async_set(_entity_id("remote_start"), "off")
+    await hass.async_block_till_done()
+    assert _clears(notify_calls) == [f"ford-start-{VIN}"]
+
+
+async def test_clearing_can_be_turned_off(hass: HomeAssistant, ford: str) -> None:
+    async_mock_service(hass, "lock", "lock")
+    notify_calls = async_mock_service(hass, "notify", "mobile_app_my_phone")
+    entry = await _setup(hass, ford)
+    entry.runtime_data.set_feature("clear_resolved", False)
+    hass.states.async_set(_entity_id("fuel"), "10", {})
+    await hass.async_block_till_done()
+    hass.states.async_set(_entity_id("fuel"), "90", {})
+    await hass.async_block_till_done()
+    assert not _clears(notify_calls)

@@ -1,38 +1,105 @@
 {
   "entity": {
     "switch": {
-      "auto_lock": { "default": "mdi:car-door-lock" },
-      "precondition": { "default": "mdi:thermometer-auto" },
-      "work_prompt": { "default": "mdi:office-building-marker" },
-      "auto_extend": { "default": "mdi:timer-plus" },
-      "alarm_alert": { "default": "mdi:alarm-light" },
-      "windows_alert": { "default": "mdi:car-door" },
-      "fuel_alert": { "default": "mdi:gas-station" },
-      "oil_alert": { "default": "mdi:oil" },
-      "battery_alert": { "default": "mdi:car-battery" },
-      "tire_alert": { "default": "mdi:car-tire-alert" },
-      "indicator_alert": { "default": "mdi:car-light-alert" },
-      "garage_open": { "default": "mdi:garage-open" },
-      "garage_close": { "default": "mdi:garage" }
+      "auto_lock": {
+        "default": "mdi:car-door-lock"
+      },
+      "precondition": {
+        "default": "mdi:thermometer-auto"
+      },
+      "work_prompt": {
+        "default": "mdi:office-building-marker"
+      },
+      "auto_extend": {
+        "default": "mdi:timer-plus"
+      },
+      "alarm_alert": {
+        "default": "mdi:alarm-light"
+      },
+      "windows_alert": {
+        "default": "mdi:car-door"
+      },
+      "fuel_alert": {
+        "default": "mdi:gas-station"
+      },
+      "oil_alert": {
+        "default": "mdi:oil"
+      },
+      "battery_alert": {
+        "default": "mdi:car-battery"
+      },
+      "tire_alert": {
+        "default": "mdi:car-tire-alert"
+      },
+      "indicator_alert": {
+        "default": "mdi:car-light-alert"
+      },
+      "garage_open": {
+        "default": "mdi:garage-open"
+      },
+      "garage_close": {
+        "default": "mdi:garage"
+      },
+      "night_lock": {
+        "default": "mdi:lock-clock"
+      },
+      "door_open_alert": {
+        "default": "mdi:car-door"
+      },
+      "clear_resolved": {
+        "default": "mdi:notification-clear-all"
+      }
     },
     "number": {
-      "auto_lock_delay": { "default": "mdi:timer-lock" },
-      "walk_away_distance": { "default": "mdi:walk" },
-      "cold_threshold": { "default": "mdi:snowflake-thermometer" },
-      "hot_threshold": { "default": "mdi:sun-thermometer" },
-      "min_fuel_to_start": { "default": "mdi:gas-station" },
-      "extend_below": { "default": "mdi:timer-plus" },
-      "fuel_threshold": { "default": "mdi:gas-station" },
-      "oil_threshold": { "default": "mdi:oil" },
-      "battery_threshold": { "default": "mdi:car-battery" },
-      "garage_close_delay": { "default": "mdi:garage-alert" }
+      "auto_lock_delay": {
+        "default": "mdi:timer-lock"
+      },
+      "walk_away_distance": {
+        "default": "mdi:walk"
+      },
+      "cold_threshold": {
+        "default": "mdi:snowflake-thermometer"
+      },
+      "hot_threshold": {
+        "default": "mdi:sun-thermometer"
+      },
+      "min_fuel_to_start": {
+        "default": "mdi:gas-station"
+      },
+      "extend_below": {
+        "default": "mdi:timer-plus"
+      },
+      "fuel_threshold": {
+        "default": "mdi:gas-station"
+      },
+      "oil_threshold": {
+        "default": "mdi:oil"
+      },
+      "battery_threshold": {
+        "default": "mdi:car-battery"
+      },
+      "garage_close_delay": {
+        "default": "mdi:garage-alert"
+      },
+      "door_open_delay": {
+        "default": "mdi:timer-alert"
+      }
     },
     "time": {
-      "precondition_time": { "default": "mdi:clock-start" },
-      "work_prompt_time": { "default": "mdi:clock-out" }
+      "precondition_time": {
+        "default": "mdi:clock-start"
+      },
+      "work_prompt_time": {
+        "default": "mdi:clock-out"
+      },
+      "night_lock_time": {
+        "default": "mdi:weather-night"
+      }
     },
     "sensor": {
-      "last_event": { "default": "mdi:car-info" }
+      "last_event": {
+        "default": "mdi:car-info"
+      }
     }
   }
 }

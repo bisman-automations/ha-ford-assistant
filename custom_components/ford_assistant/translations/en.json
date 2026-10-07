@@ -83,38 +83,105 @@
   },
   "entity": {
     "switch": {
-      "auto_lock": { "name": "Auto-lock away from home" },
-      "precondition": { "name": "Morning pre-conditioning" },
-      "work_prompt": { "name": "Leaving-work start prompt" },
-      "auto_extend": { "name": "Auto-extend remote start" },
-      "alarm_alert": { "name": "Alarm alert" },
-      "windows_alert": { "name": "Windows open rain alert" },
-      "fuel_alert": { "name": "Low fuel alert" },
-      "oil_alert": { "name": "Oil change alert" },
-      "battery_alert": { "name": "12V battery alert" },
-      "tire_alert": { "name": "Tire pressure alert" },
-      "indicator_alert": { "name": "Warning light alert" },
-      "garage_open": { "name": "Open garage on arrival" },
-      "garage_close": { "name": "Close garage after parking" }
+      "auto_lock": {
+        "name": "Auto-lock away from home"
+      },
+      "precondition": {
+        "name": "Morning pre-conditioning"
+      },
+      "work_prompt": {
+        "name": "Leaving-work start prompt"
+      },
+      "auto_extend": {
+        "name": "Auto-extend remote start"
+      },
+      "alarm_alert": {
+        "name": "Alarm alert"
+      },
+      "windows_alert": {
+        "name": "Windows open rain alert"
+      },
+      "fuel_alert": {
+        "name": "Low fuel alert"
+      },
+      "oil_alert": {
+        "name": "Oil change alert"
+      },
+      "battery_alert": {
+        "name": "12V battery alert"
+      },
+      "tire_alert": {
+        "name": "Tire pressure alert"
+      },
+      "indicator_alert": {
+        "name": "Warning light alert"
+      },
+      "garage_open": {
+        "name": "Open garage on arrival"
+      },
+      "garage_close": {
+        "name": "Close garage after parking"
+      },
+      "night_lock": {
+        "name": "Lock at night"
+      },
+      "door_open_alert": {
+        "name": "Door open alert"
+      },
+      "clear_resolved": {
+        "name": "Clear resolved notifications"
+      }
     },
     "number": {
-      "auto_lock_delay": { "name": "Auto-lock delay" },
-      "walk_away_distance": { "name": "Auto-lock walk-away distance" },
-      "cold_threshold": { "name": "Start if colder than" },
-      "hot_threshold": { "name": "Start if hotter than" },
-      "min_fuel_to_start": { "name": "Minimum fuel to remote start" },
-      "extend_below": { "name": "Extend remote start below" },
-      "fuel_threshold": { "name": "Low fuel threshold" },
-      "oil_threshold": { "name": "Oil life threshold" },
-      "battery_threshold": { "name": "12V battery threshold" },
-      "garage_close_delay": { "name": "Garage close delay" }
+      "auto_lock_delay": {
+        "name": "Auto-lock delay"
+      },
+      "walk_away_distance": {
+        "name": "Auto-lock walk-away distance"
+      },
+      "cold_threshold": {
+        "name": "Start if colder than"
+      },
+      "hot_threshold": {
+        "name": "Start if hotter than"
+      },
+      "min_fuel_to_start": {
+        "name": "Minimum fuel to remote start"
+      },
+      "extend_below": {
+        "name": "Extend remote start below"
+      },
+      "fuel_threshold": {
+        "name": "Low fuel threshold"
+      },
+      "oil_threshold": {
+        "name": "Oil life threshold"
+      },
+      "battery_threshold": {
+        "name": "12V battery threshold"
+      },
+      "garage_close_delay": {
+        "name": "Garage close delay"
+      },
+      "door_open_delay": {
+        "name": "Door open alert delay"
+      }
     },
     "time": {
-      "precondition_time": { "name": "Pre-conditioning time" },
-      "work_prompt_time": { "name": "Leaving-work prompt time" }
+      "precondition_time": {
+        "name": "Pre-conditioning time"
+      },
+      "work_prompt_time": {
+        "name": "Leaving-work prompt time"
+      },
+      "night_lock_time": {
+        "name": "Night lock time"
+      }
     },
     "sensor": {
-      "last_event": { "name": "Assistant last event" }
+      "last_event": {
+        "name": "Assistant last event"
+      }
     }
   },
   "exceptions": {

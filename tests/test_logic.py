@@ -81,3 +81,10 @@ def test_tire_summary() -> None:
     text = tire_summary("SYSTEM_WARNING", attrs)
     assert text.startswith("System warning. Front left: 32.0 psi ⚠️ Low pressure")
     assert "Rear right: 35.0 psi" in text
+
+
+def test_open_doors() -> None:
+    from custom_components.ford_assistant.logic import open_doors
+
+    attrs = {"driverFront": "OPEN", "passengerFront": "CLOSED", "hood": "AJAR", "tailgate": "INVALID"}
+    assert open_doors(attrs) == ["Driver front", "Hood"]

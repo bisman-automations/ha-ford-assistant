@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-07
+
+### Added
+
+- **Lock at night.** At a set time (10 PM by default), locks the vehicle if it's still unlocked with the ignition off, wherever it's parked. If a door or the hood is open it tells you which one instead.
+- **Door open alert.** Notifies when a door or the hood has been open for a while (10 minutes by default) with the ignition off, naming which ones.
+- **Clear resolved notifications.** Alerts are removed from your phones once the problem clears: windows or doors closed, fuel, oil or 12V battery back up, tire pressure or warning lights back to normal, the alarm back to a normal state, or remote start stopped. Getting back in the vehicle also clears the start, lock and garage notifications. Turn it off with the new switch if you'd rather keep them.
+
 ## [1.0.0] - 2026-10-06
 
 ### Added

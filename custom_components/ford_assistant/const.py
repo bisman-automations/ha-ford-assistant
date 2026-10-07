@@ -67,6 +67,9 @@ FEATURES: Final[dict[str, bool]] = {
     "indicator_alert": True,
     "garage_open": True,
     "garage_close": True,
+    "night_lock": True,
+    "door_open_alert": True,
+    "clear_resolved": True,
 }
 
 
@@ -92,15 +95,19 @@ NUMBERS: Final[dict[str, NumberSpec]] = {
     "oil_threshold": NumberSpec(10, 1, 100, 1, "%"),
     "battery_threshold": NumberSpec(60, 1, 100, 1, "%"),
     "garage_close_delay": NumberSpec(10, 1, 120, 1, "min"),
+    "door_open_delay": NumberSpec(10, 1, 120, 1, "min"),
 }
 
 TIMES: Final[dict[str, str]] = {
     "precondition_time": "07:30:00",
     "work_prompt_time": "16:45:00",
+    "night_lock_time": "22:00:00",
 }
 
 # Alerts that fire once, then re-arm when the condition clears.
-LATCHED_ALERTS: Final = ("fuel", "oil", "battery", "tires", "indicators", "windows")
+LATCHED_ALERTS: Final = (
+    "fuel", "oil", "battery", "tires", "indicators", "windows", "door"
+)
 
 # Re-arm hysteresis for percentage alerts (points above threshold).
 REARM_MARGIN: Final = 5
