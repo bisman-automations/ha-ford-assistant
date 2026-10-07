@@ -1,0 +1,13 @@
+{
+  "domain": "ford_assistant",
+  "name": "Ford Assistant",
+  "codeowners": ["@donavanbecker"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/bisman-automations/ha-ford-assistant",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/bisman-automations/ha-ford-assistant/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

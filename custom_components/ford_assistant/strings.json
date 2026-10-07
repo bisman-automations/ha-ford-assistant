@@ -1,0 +1,131 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Choose a vehicle",
+        "description": "Pick a vehicle set up by the Ford integration.",
+        "data": {
+          "vin": "Vehicle"
+        }
+      },
+      "settings": {
+        "title": "Alerts and places",
+        "description": "Choose who gets notifications and which places matter. You can change these later.",
+        "data": {
+          "notify_devices": "Notify devices",
+          "phone_tracker": "Your phone",
+          "home_zone": "Home zone",
+          "work_zone": "Work zone",
+          "weather_entity": "Weather",
+          "todo_entity": "To-do list for oil changes",
+          "garage_cover": "Garage door"
+        },
+        "data_description": {
+          "notify_devices": "Phones that get notifications with Lock, Honk, Start and Stop buttons.",
+          "phone_tracker": "Optional. Auto-lock waits until this phone is away from the vehicle.",
+          "home_zone": "Auto-lock only runs outside this zone; pre-conditioning and the garage only run inside it.",
+          "work_zone": "Optional. Used for the leaving-work start prompt and a low-fuel reminder.",
+          "weather_entity": "Optional. Needed for the windows-open rain alert.",
+          "todo_entity": "Optional. An oil change item is added when oil life is low.",
+          "garage_cover": "Optional. Opens when you arrive home and closes after you park."
+        }
+      }
+    },
+    "error": {
+      "missing_entities": "The Ford integration hasn't created a door lock and vehicle tracker for this vehicle yet."
+    },
+    "abort": {
+      "no_vehicles": "No vehicles found. Set up the Ford integration first.",
+      "already_configured": "Every Ford vehicle already has Ford Assistant set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ford Assistant options",
+        "data": {
+          "notify_devices": "Notify devices",
+          "phone_tracker": "Your phone",
+          "home_zone": "Home zone",
+          "work_zone": "Work zone",
+          "weather_entity": "Weather",
+          "todo_entity": "To-do list for oil changes",
+          "garage_cover": "Garage door",
+          "precondition_days": "Pre-conditioning days",
+          "work_prompt_days": "Leaving-work prompt days",
+          "alarm_normal_states": "Normal alarm states"
+        },
+        "data_description": {
+          "notify_devices": "Phones that get notifications with Lock, Honk, Start and Stop buttons.",
+          "phone_tracker": "Optional. Auto-lock waits until this phone is away from the vehicle.",
+          "home_zone": "Auto-lock only runs outside this zone; pre-conditioning and the garage only run inside it.",
+          "work_zone": "Optional. Used for the leaving-work start prompt and a low-fuel reminder.",
+          "weather_entity": "Optional. Needed for the windows-open rain alert.",
+          "todo_entity": "Optional. An oil change item is added when oil life is low.",
+          "garage_cover": "Optional. Opens when you arrive home and closes after you park.",
+          "alarm_normal_states": "Any other alarm state sends a critical notification."
+        }
+      }
+    }
+  },
+  "selector": {
+    "weekday": {
+      "options": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
+      }
+    }
+  },
+  "entity": {
+    "switch": {
+      "auto_lock": { "name": "Auto-lock away from home" },
+      "precondition": { "name": "Morning pre-conditioning" },
+      "work_prompt": { "name": "Leaving-work start prompt" },
+      "auto_extend": { "name": "Auto-extend remote start" },
+      "alarm_alert": { "name": "Alarm alert" },
+      "windows_alert": { "name": "Windows open rain alert" },
+      "fuel_alert": { "name": "Low fuel alert" },
+      "oil_alert": { "name": "Oil change alert" },
+      "battery_alert": { "name": "12V battery alert" },
+      "tire_alert": { "name": "Tire pressure alert" },
+      "indicator_alert": { "name": "Warning light alert" },
+      "garage_open": { "name": "Open garage on arrival" },
+      "garage_close": { "name": "Close garage after parking" }
+    },
+    "number": {
+      "auto_lock_delay": { "name": "Auto-lock delay" },
+      "walk_away_distance": { "name": "Auto-lock walk-away distance" },
+      "cold_threshold": { "name": "Start if colder than" },
+      "hot_threshold": { "name": "Start if hotter than" },
+      "min_fuel_to_start": { "name": "Minimum fuel to remote start" },
+      "extend_below": { "name": "Extend remote start below" },
+      "fuel_threshold": { "name": "Low fuel threshold" },
+      "oil_threshold": { "name": "Oil life threshold" },
+      "battery_threshold": { "name": "12V battery threshold" },
+      "garage_close_delay": { "name": "Garage close delay" }
+    },
+    "time": {
+      "precondition_time": { "name": "Pre-conditioning time" },
+      "work_prompt_time": { "name": "Leaving-work prompt time" }
+    },
+    "sensor": {
+      "last_event": { "name": "Assistant last event" }
+    }
+  },
+  "exceptions": {
+    "missing_entities": {
+      "message": "The Ford integration's door lock or vehicle tracker for {vin} isn't available yet."
+    }
+  },
+  "issues": {
+    "missing_entities": {
+      "title": "Ford Assistant can't find {vehicle}",
+      "description": "Ford Assistant needs these entities from the Ford integration: {entities}. Make sure the Ford integration is set up and the vehicle's entities are enabled, then reload Ford Assistant."
+    }
+  }
+}
