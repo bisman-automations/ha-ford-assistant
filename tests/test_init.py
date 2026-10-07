@@ -258,6 +258,8 @@ async def test_door_open_alert_and_clear(hass: HomeAssistant, ford: str) -> None
     door = [c for c in notify_calls if c.data.get("title", "").startswith("🚪")]
     assert len(door) == 1
     assert door[0].data["message"] == "Driver front has been open for 10 minutes."
+    assert door[0].data["data"]["push"] == {"interruption-level": "time-sensitive"}
+    assert door[0].data["data"]["priority"] == "high"
 
     hass.states.async_set(_entity_id("doors"), "Closed", {})
     await hass.async_block_till_done()

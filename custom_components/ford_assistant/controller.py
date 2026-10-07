@@ -406,6 +406,7 @@ class FordAssistantController:
         message: str,
         actions: list[str] | None = None,
         critical: bool = False,
+        time_sensitive: bool = False,
     ) -> None:
         """Send a notification, fire an event, and record it."""
         data: dict[str, Any] = {"tag": f"ford-{kind}-{self.vin}"}
@@ -420,6 +421,11 @@ class FordAssistantController:
             data["ttl"] = 0
             data["priority"] = "high"
             data["channel"] = "alarm_stream"
+        elif time_sensitive:
+            # Breaks through Focus / Do Not Disturb without a critical siren.
+            data["push"] = {"interruption-level": "time-sensitive"}
+            data["ttl"] = 0
+            data["priority"] = "high"
 
         for service in self._notify_services():
             if not self.hass.services.has_service("notify", service):
@@ -567,6 +573,7 @@ class FordAssistantController:
             "door",
             f"🚪 {self.name} door open",
             f"{doors} {'have' if plural else 'has'} been open for {minutes} minutes.",
+            time_sensitive=True,
         )
 
     def _walked_away(self) -> bool:
@@ -627,6 +634,7 @@ class FordAssistantController:
                     "door",
                     f"🚪 {self.name} couldn't lock for the night",
                     f"{doors} {'are' if plural else 'is'} open.",
+                    time_sensitive=True,
                 )
             return
         if await self._call("lock", "lock", "lock"):

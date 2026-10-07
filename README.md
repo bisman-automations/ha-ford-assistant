@@ -15,7 +15,7 @@ A companion to the [Ford integration](https://github.com/marq24/ha-fordpass) for
 - **Leaving-work start prompt.** A notification with a **Start** button at the end of your workday.
 - **Auto-extend remote start.** Presses Extend when the remote start timer runs low.
 - **Alerts.** Alarm (critical), windows open with rain coming, low fuel, oil change (adds a to-do item), 12V battery, tire pressure, and dashboard warning lights. Each alert fires once, re-arms only after the problem clears, and is removed from your phone when it's resolved.
-- **Door open alert.** Tells you which door or the hood has been left open.
+- **Door open alert.** Tells you which door or the hood has been left open, as a time-sensitive notification that gets through Focus.
 - **Garage door.** Opens when the vehicle arrives home and closes a while after you park.
 - **Actionable notifications.** **Lock**, **Honk & Flash**, **Start** and **Stop** buttons right in the notification.
 
