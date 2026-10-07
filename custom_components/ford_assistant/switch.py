@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import FordAssistantConfigEntry
-from .const import FEATURES
+from .const import EV_FEATURES, FEATURES
 from .entity import FordAssistantEntity
 
 
@@ -21,7 +21,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up feature switches."""
     controller = entry.runtime_data
-    async_add_entities(FeatureSwitch(controller, key) for key in FEATURES)
+    async_add_entities(
+        FeatureSwitch(controller, key)
+        for key in FEATURES
+        if controller.is_electric or key not in EV_FEATURES
+    )
 
 
 class FeatureSwitch(FordAssistantEntity, SwitchEntity):

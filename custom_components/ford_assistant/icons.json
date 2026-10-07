@@ -48,6 +48,18 @@
       },
       "clear_resolved": {
         "default": "mdi:notification-clear-all"
+      },
+      "quiet_hours": {
+        "default": "mdi:bell-sleep"
+      },
+      "remote_start_activity": {
+        "default": "mdi:car-key"
+      },
+      "plug_in_reminder": {
+        "default": "mdi:ev-plug-type1"
+      },
+      "charge_alert": {
+        "default": "mdi:battery-charging"
       }
     },
     "number": {
@@ -83,6 +95,9 @@
       },
       "door_open_delay": {
         "default": "mdi:timer-alert"
+      },
+      "plug_in_below": {
+        "default": "mdi:battery-50"
       }
     },
     "time": {
@@ -94,6 +109,15 @@
       },
       "night_lock_time": {
         "default": "mdi:weather-night"
+      },
+      "quiet_start": {
+        "default": "mdi:bell-sleep"
+      },
+      "quiet_end": {
+        "default": "mdi:bell-ring"
+      },
+      "plug_in_time": {
+        "default": "mdi:ev-station"
       }
     },
     "sensor": {

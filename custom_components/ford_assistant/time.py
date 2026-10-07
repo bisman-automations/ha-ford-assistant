@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import FordAssistantConfigEntry
-from .const import TIMES
+from .const import EV_TIMES, TIMES
 from .entity import FordAssistantEntity
 
 
@@ -21,7 +21,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up time settings."""
     controller = entry.runtime_data
-    async_add_entities(ScheduleTime(controller, key) for key in TIMES)
+    async_add_entities(
+        ScheduleTime(controller, key)
+        for key in TIMES
+        if controller.is_electric or key not in EV_TIMES
+    )
 
 
 class ScheduleTime(FordAssistantEntity, TimeEntity):

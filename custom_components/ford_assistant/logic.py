@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from datetime import time
 import re
 from typing import Any
 
@@ -15,6 +16,15 @@ TIRE_LABELS = {
     "rearLeft": "Rear left",
     "rearRight": "Rear right",
 }
+
+
+def in_quiet_hours(now: time, start: time, end: time) -> bool:
+    """Whether a time falls inside quiet hours (which may span midnight)."""
+    if start == end:
+        return False
+    if start < end:
+        return start <= now < end
+    return now >= start or now < end
 
 
 def to_float(value: Any) -> float | None:

@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import FordAssistantConfigEntry
-from .const import NUMBERS
+from .const import EV_NUMBERS, NUMBERS
 from .entity import FordAssistantEntity
 
 
@@ -19,7 +19,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up number settings."""
     controller = entry.runtime_data
-    async_add_entities(SettingNumber(controller, key) for key in NUMBERS)
+    async_add_entities(
+        SettingNumber(controller, key)
+        for key in NUMBERS
+        if controller.is_electric or key not in EV_NUMBERS
+    )
 
 
 class SettingNumber(FordAssistantEntity, NumberEntity):

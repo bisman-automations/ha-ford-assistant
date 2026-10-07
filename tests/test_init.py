@@ -66,6 +66,8 @@ async def ford(hass: HomeAssistant) -> str:
     )
     registry = er.async_get(hass)
     for role, (platform, key) in FORD_ENTITY_KEYS.items():
+        if role not in STATES:
+            continue
         registry.async_get_or_create(
             platform,
             "fordpass",
@@ -286,7 +288,8 @@ async def test_start_prompt_clears(hass: HomeAssistant, ford: str) -> None:
     assert not _clears(notify_calls)
     hass.states.async_set(_entity_id("remote_start"), "off")
     await hass.async_block_till_done()
-    assert _clears(notify_calls) == [f"ford-start-{VIN}"]
+    # The prompt and the remote start Live Activity both go away.
+    assert sorted(_clears(notify_calls)) == [f"ford-activity-{VIN}", f"ford-start-{VIN}"]
 
 
 async def test_clearing_can_be_turned_off(hass: HomeAssistant, ford: str) -> None:

@@ -29,6 +29,18 @@
           "todo_entity": "Optional. An oil change item is added when oil life is low.",
           "garage_cover": "Optional. Opens when you arrive home and closes after you park."
         }
+      },
+      "import_blueprint": {
+        "title": "Copy blueprint settings",
+        "description": "Found a Vehicle Assistant blueprint automation for this vehicle. Copy its phones, places, features, thresholds and times into Ford Assistant?",
+        "data": {
+          "automation": "Copy from",
+          "disable_automation": "Turn off the blueprint automation"
+        },
+        "data_description": {
+          "automation": "Pick the automation to copy, or start fresh.",
+          "disable_automation": "Recommended, so you don't get every notification twice. The automation is turned off, not deleted."
+        }
       }
     },
     "error": {
@@ -78,6 +90,11 @@
         "fri": "Friday",
         "sat": "Saturday",
         "sun": "Sunday"
+      }
+    },
+    "import_choice": {
+      "options": {
+        "skip": "Don't copy, start fresh"
       }
     }
   },
@@ -130,6 +147,18 @@
       },
       "clear_resolved": {
         "name": "Clear resolved notifications"
+      },
+      "quiet_hours": {
+        "name": "Quiet hours"
+      },
+      "remote_start_activity": {
+        "name": "Remote start Live Activity"
+      },
+      "plug_in_reminder": {
+        "name": "Plug-in reminder"
+      },
+      "charge_alert": {
+        "name": "Charging alert"
       }
     },
     "number": {
@@ -165,6 +194,9 @@
       },
       "door_open_delay": {
         "name": "Door open alert delay"
+      },
+      "plug_in_below": {
+        "name": "Plug-in reminder below"
       }
     },
     "time": {
@@ -176,6 +208,15 @@
       },
       "night_lock_time": {
         "name": "Night lock time"
+      },
+      "quiet_start": {
+        "name": "Quiet hours start"
+      },
+      "quiet_end": {
+        "name": "Quiet hours end"
+      },
+      "plug_in_time": {
+        "name": "Plug-in reminder time"
       }
     },
     "sensor": {

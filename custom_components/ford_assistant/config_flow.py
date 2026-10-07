@@ -33,6 +33,11 @@ from .const import (
     WEEKDAYS,
 )
 from .discovery import ford_vehicles, resolve_entities
+from .importer import BlueprintSettings, find_blueprint_automations
+
+CONF_AUTOMATION = "automation"
+CONF_DISABLE_AUTOMATION = "disable_automation"
+SKIP_IMPORT = "skip"
 
 DAY_SELECTOR = selector.SelectSelector(
     selector.SelectSelectorConfig(
@@ -83,6 +88,9 @@ class FordAssistantConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialise the flow."""
         self._vin: str | None = None
+        self._blueprints: list[BlueprintSettings] = []
+        self._import: BlueprintSettings | None = None
+        self._disable_automation = False
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -108,6 +116,11 @@ class FordAssistantConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "missing_entities"
             else:
                 self._vin = vin
+                self._blueprints = find_blueprint_automations(
+                    self.hass, entities.get("lock")
+                )
+                if self._blueprints:
+                    return await self.async_step_import_blueprint()
                 return await self.async_step_settings()
 
         return self.async_show_form(
@@ -127,23 +140,74 @@ class FordAssistantConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    async def async_step_import_blueprint(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Offer to copy settings from an existing blueprint automation."""
+        if user_input is not None:
+            choice = user_input[CONF_AUTOMATION]
+            self._import = next(
+                (b for b in self._blueprints if b.entity_id == choice), None
+            )
+            self._disable_automation = bool(
+                self._import and user_input.get(CONF_DISABLE_AUTOMATION)
+            )
+            return await self.async_step_settings()
+
+        options = [
+            selector.SelectOptionDict(value=b.entity_id, label=b.name)
+            for b in self._blueprints
+        ]
+        options.append(selector.SelectOptionDict(value=SKIP_IMPORT, label=SKIP_IMPORT))
+        return self.async_show_form(
+            step_id="import_blueprint",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_AUTOMATION, default=self._blueprints[0].entity_id
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=options, translation_key="import_choice"
+                        )
+                    ),
+                    vol.Required(CONF_DISABLE_AUTOMATION, default=True): bool,
+                }
+            ),
+        )
+
     async def async_step_settings(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Where to send alerts and which places matter."""
         assert self._vin is not None
+        imported = self._import.options if self._import else {}
         if user_input is not None:
+            data: dict[str, Any] = {CONF_VIN: self._vin}
+            if self._import:
+                data["imported"] = self._import.stored()
+                if self._disable_automation:
+                    await self.hass.services.async_call(
+                        "automation",
+                        "turn_off",
+                        {"entity_id": self._import.entity_id},
+                        blocking=True,
+                    )
             return self.async_create_entry(
                 title=ford_vehicles(self.hass).get(self._vin, self._vin),
-                data={CONF_VIN: self._vin},
+                data=data,
                 options={
+                    CONF_PRECONDITION_DAYS: imported.get(CONF_PRECONDITION_DAYS, DEFAULT_DAYS),
+                    CONF_WORK_PROMPT_DAYS: imported.get(CONF_WORK_PROMPT_DAYS, DEFAULT_DAYS),
+                    CONF_ALARM_NORMAL_STATES: imported.get(
+                        CONF_ALARM_NORMAL_STATES, DEFAULT_ALARM_NORMAL_STATES
+                    ),
                     **user_input,
-                    CONF_PRECONDITION_DAYS: DEFAULT_DAYS,
-                    CONF_WORK_PROMPT_DAYS: DEFAULT_DAYS,
-                    CONF_ALARM_NORMAL_STATES: DEFAULT_ALARM_NORMAL_STATES,
                 },
             )
-        return self.async_show_form(step_id="settings", data_schema=_settings_schema())
+        schema = _settings_schema()
+        if imported:
+            schema = self.add_suggested_values_to_schema(schema, imported)
+        return self.async_show_form(step_id="settings", data_schema=schema)
 
     @staticmethod
     @callback

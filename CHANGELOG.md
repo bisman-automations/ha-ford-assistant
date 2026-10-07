@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-07
+
+### Added
+
+- **Remote start Live Activity.** While remote start is running, your phone shows a Live Activity (Live Update on Android) that counts down the time left, with **Stop** and **Extend** buttons. It updates when the time is extended and goes away when remote start stops or you get in. Morning pre-conditioning uses it instead of a separate notification.
+- **Quiet hours.** Hold non-urgent alerts (fuel, oil, 12V battery, tires, warning lights, windows) between set times and deliver them when quiet hours end. Anything that resolves overnight is dropped. The alarm and door alerts always go through. Off by default.
+- **Electric and plug-in hybrid support.** For vehicles with a high-voltage battery: a plug-in reminder at a set time when the battery is below a level and the vehicle is home and unplugged, alerts when charging finishes or stops because of a fault, and battery level in place of fuel for low-energy alerts and remote start checks. These entities only appear for electric and plug-in hybrid vehicles.
+- **Copy settings from the blueprint.** Setup finds a FordPass – Vehicle Assistant blueprint automation for the vehicle, copies its phones, places, days, feature toggles, thresholds and times, and can turn the automation off for you.
+- Tapping a notification opens the vehicle's device page.
+
 ## [1.1.0] - 2026-10-07
 
 ### Added

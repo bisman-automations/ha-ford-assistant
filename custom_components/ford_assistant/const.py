@@ -49,7 +49,12 @@ FORD_ENTITY_KEYS: Final[dict[str, tuple[str, str]]] = {
     "tires": ("sensor", "tirepressure"),
     "indicators": ("sensor", "indicators"),
     "temperature": ("sensor", "outsidetemp"),
+    # Electric and plug-in hybrid vehicles
+    "soc": ("sensor", "soc"),
+    "ev_plug": ("sensor", "elvehplug"),
+    "ev_charging": ("sensor", "elvehcharging"),
 }
+EV_ROLES: Final = ("soc", "ev_plug", "ev_charging")
 REQUIRED_ROLES: Final = ("lock", "tracker")
 
 # Feature switches: key -> default
@@ -70,7 +75,16 @@ FEATURES: Final[dict[str, bool]] = {
     "night_lock": True,
     "door_open_alert": True,
     "clear_resolved": True,
+    "quiet_hours": False,
+    "remote_start_activity": True,
+    "plug_in_reminder": True,
+    "charge_alert": True,
 }
+
+# Only created for electric and plug-in hybrid vehicles.
+EV_FEATURES: Final = frozenset({"plug_in_reminder", "charge_alert"})
+EV_NUMBERS: Final = frozenset({"plug_in_below"})
+EV_TIMES: Final = frozenset({"plug_in_time"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,12 +110,16 @@ NUMBERS: Final[dict[str, NumberSpec]] = {
     "battery_threshold": NumberSpec(60, 1, 100, 1, "%"),
     "garage_close_delay": NumberSpec(10, 1, 120, 1, "min"),
     "door_open_delay": NumberSpec(10, 1, 120, 1, "min"),
+    "plug_in_below": NumberSpec(50, 5, 100, 5, "%"),
 }
 
 TIMES: Final[dict[str, str]] = {
     "precondition_time": "07:30:00",
     "work_prompt_time": "16:45:00",
     "night_lock_time": "22:00:00",
+    "quiet_start": "22:00:00",
+    "quiet_end": "07:00:00",
+    "plug_in_time": "21:00:00",
 }
 
 # Alerts that fire once, then re-arm when the condition clears.
@@ -117,6 +135,14 @@ WET_CONDITIONS: Final = frozenset(
     {"rainy", "pouring", "lightning-rainy", "snowy-rainy", "snowy", "hail"}
 )
 
-COMMANDS: Final = ("LOCK", "HONK", "START", "STOP")
+COMMANDS: Final = ("LOCK", "HONK", "START", "STOP", "EXTEND")
+
+# Ford integration charging states
+PLUG_DISCONNECTED: Final = "DISCONNECTED"
+CHARGE_IN_PROGRESS: Final = "IN_PROGRESS"
+CHARGE_DONE: Final = "STOPPED"
+CHARGE_FAULTS: Final = frozenset({"FAULT", "STATION_NOT_DETECTED"})
+
+ACTIVITY_COLOR: Final = "#1F6FD1"
 
 STORAGE_VERSION: Final = 1
