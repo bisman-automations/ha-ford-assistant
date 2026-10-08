@@ -88,3 +88,15 @@ def test_open_doors() -> None:
 
     attrs = {"driverFront": "OPEN", "passengerFront": "CLOSED", "hood": "AJAR", "tailgate": "INVALID"}
     assert open_doors(attrs) == ["Driver front", "Hood"]
+
+
+def test_open_doors_ignores_ha_attributes() -> None:
+    from custom_components.ford_assistant.logic import open_doors
+
+    attrs = {
+        "driverFront": "AJAR",
+        "rearLeft": "CLOSED",
+        "icon": "mdi:car-door",
+        "friendly_name": "Doors",
+    }
+    assert open_doors(attrs) == ["Driver front"]

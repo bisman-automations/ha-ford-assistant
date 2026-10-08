@@ -44,6 +44,7 @@ STATES = {
     "tires": ("NORMAL_OPERATION", {}),
     "indicators": ("0", {}),
     "temperature": ("20", {}),
+    "refresh": ("unknown", {}),
 }
 
 
@@ -302,3 +303,17 @@ async def test_clearing_can_be_turned_off(hass: HomeAssistant, ford: str) -> Non
     hass.states.async_set(_entity_id("fuel"), "90", {})
     await hass.async_block_till_done()
     assert not _clears(notify_calls)
+
+
+async def test_door_open_requests_refresh_once(hass: HomeAssistant, ford: str) -> None:
+    async_mock_service(hass, "lock", "lock")
+    async_mock_service(hass, "notify", "mobile_app_my_phone")
+    await _setup(hass, ford)
+    press_calls = async_mock_service(hass, "button", "press")
+
+    hass.states.async_set(_entity_id("doors"), "Open", {"driverFront": "AJAR"})
+    await hass.async_block_till_done()
+    for minutes in (1, 3, 5):
+        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=minutes))
+        await hass.async_block_till_done()
+    assert [c.data["entity_id"] for c in press_calls] == [_entity_id("refresh")]

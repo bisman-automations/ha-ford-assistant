@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-10-08
+
+### Fixed
+
+- Open-door lists in the status Live Activity, the door open alert and the night lock message included the doors sensor's own "Icon" and "Friendly_name" attributes. Only actual doors are listed now.
+- A door reported open just as you park is now double-checked. Ford often reports the driver's door ajar in the update sent as the ignition turns off and doesn't report again once it's closed. If a door still looks open two minutes after parking, Ford Assistant asks the vehicle for a fresh status (once), which clears a stale reading well before the door open alert would go out. This uses the Ford integration's **Request refresh** button, if it's enabled.
+
 ## [1.3.0] - 2026-10-08
 
 ### Added

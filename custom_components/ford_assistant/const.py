@@ -49,6 +49,7 @@ FORD_ENTITY_KEYS: Final[dict[str, tuple[str, str]]] = {
     "tires": ("sensor", "tirepressure"),
     "indicators": ("sensor", "indicators"),
     "temperature": ("sensor", "outsidetemp"),
+    "refresh": ("button", "request_refresh"),
     # Electric and plug-in hybrid vehicles
     "soc": ("sensor", "soc"),
     "ev_plug": ("sensor", "elvehplug"),
@@ -132,6 +133,9 @@ LATCHED_ALERTS: Final = (
 REARM_MARGIN: Final = 5
 
 WINDOW_OPEN_DELAY: Final = 600  # seconds
+# A door reported open as you park is often a snapshot taken while you were
+# getting out; ask the vehicle for a fresh status after this long to confirm.
+DOOR_RECHECK_DELAY: Final = 120  # seconds
 WET_CONDITIONS: Final = frozenset(
     {"rainy", "pouring", "lightning-rainy", "snowy-rainy", "snowy", "hail"}
 )

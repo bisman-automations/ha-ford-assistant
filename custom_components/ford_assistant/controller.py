@@ -57,6 +57,7 @@ from .const import (
     DEFAULT_ALARM_NORMAL_STATES,
     DEFAULT_DAYS,
     DOMAIN,
+    DOOR_RECHECK_DELAY,
     EV_ROLES,
     EVENT_ALERT,
     FEATURES,
@@ -124,6 +125,7 @@ class FordAssistantController:
         self._activity_sent_minutes: float | None = None
         self._activity_sent_at: datetime | None = None
         self._activity_pending = False
+        self._door_rechecked = False
         # Always-on vehicle status Live Activity
         self.status = StatusActivity(self)
 
@@ -231,6 +233,7 @@ class FordAssistantController:
             self._start_timer("windows", WINDOW_OPEN_DELAY, self._check_windows)
         if self._doors_open() and self._ignition_off():
             self._start_timer("door_open", self._door_open_delay, self._check_door_open)
+            self._schedule_door_recheck()
         if self._deferred and not self._quiet_now():
             self.hass.async_create_task(self._flush_deferred())
         if self._is(e.get("remote_start"), "on"):
@@ -649,6 +652,7 @@ class FordAssistantController:
             )
             if self._doors_open():
                 self._start_timer("door_open", self._door_open_delay, self._check_door_open)
+                self._schedule_door_recheck()
         elif not off:
             self._cancel_timer("garage_close")
             self._cancel_timer("door_open")
@@ -664,12 +668,34 @@ class FordAssistantController:
             return
         if new.state == "Closed":
             self._cancel_timer("door_open")
+            self._cancel_timer("door_recheck")
+            self._door_rechecked = False
             self._latch("door", (False, False))
             # Doors just closed while unlocked: restart the wait.
             if self._is(self.entities.get("lock"), "unlocked"):
                 self._start_timer("auto_lock", self._auto_lock_delay, self._check_auto_lock)
-        elif new.state == "Open" and self._ignition_off() and "door_open" not in self._timers:
-            self._start_timer("door_open", self._door_open_delay, self._check_door_open)
+        elif new.state == "Open" and self._ignition_off():
+            if "door_open" not in self._timers:
+                self._start_timer("door_open", self._door_open_delay, self._check_door_open)
+            self._schedule_door_recheck()
+
+    @callback
+    def _schedule_door_recheck(self) -> None:
+        """Ask the vehicle for a fresh status once if a door still looks open.
+
+        Ford often reports the driver's door ajar in the update sent as the
+        ignition turns off, and the vehicle may not report again when it closes.
+        """
+        if self._door_rechecked or "refresh" not in self.entities or "door_recheck" in self._timers:
+            return
+        self._start_timer("door_recheck", DOOR_RECHECK_DELAY, self._door_recheck)
+
+    async def _door_recheck(self) -> None:
+        if not (self._doors_open() and self._ignition_off()) or self._door_rechecked:
+            return
+        self._door_rechecked = True
+        _LOGGER.debug("%s: door still reported open, requesting a vehicle status refresh", self.name)
+        await self._call("button", "press", "refresh")
 
     def _open_door_text(self) -> tuple[str, bool]:
         """Which doors are open, and whether that's more than one."""

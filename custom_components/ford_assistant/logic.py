@@ -122,12 +122,18 @@ def active_indicators(attributes: Mapping[str, Any]) -> list[str]:
 
 
 def open_doors(attributes: Mapping[str, Any]) -> list[str]:
-    """Readable names of the doors (and hood) that are open."""
+    """Readable names of the doors (and hood) that are open.
+
+    Only door values count (upper-case states like OPEN or AJAR); Home
+    Assistant's own attributes on the sensor (icon, friendly_name) are skipped.
+    """
     closed = {"CLOSED", "INVALID", "UNKNOWN", "UNSUPPORTED"}
     return [
         humanize(key)
         for key, value in attributes.items()
-        if isinstance(value, str) and value.upper() not in closed
+        if isinstance(value, str)
+        and re.fullmatch(r"[A-Z_]+", value)
+        and value not in closed
     ]
 
 
