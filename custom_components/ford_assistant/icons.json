@@ -60,6 +60,9 @@
       },
       "charge_alert": {
         "default": "mdi:battery-charging"
+      },
+      "status_activity": {
+        "default": "mdi:car-connected"
       }
     },
     "number": {

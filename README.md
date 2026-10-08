@@ -14,7 +14,8 @@ A companion to the [Ford integration](https://github.com/marq24/ha-fordpass) for
 - **Morning pre-conditioning.** Remote starts at a set time on chosen days when it's colder or hotter than your limits and there's enough fuel.
 - **Leaving-work start prompt.** A notification with a **Start** button at the end of your workday.
 - **Auto-extend remote start.** Presses Extend when the remote start timer runs low.
-- **Remote start Live Activity.** A countdown on your lock screen while remote start runs, with Stop and Extend buttons.
+- **Remote start Live Activity.** A countdown on your lock screen while remote start runs.
+- **Vehicle status Live Activity.** Optional: your vehicle's lock state, doors, fuel or battery, location and temperature, always on your lock screen.
 - **Alerts.** Alarm (critical), windows open with rain coming, low fuel, oil change (adds a to-do item), 12V battery, tire pressure, and dashboard warning lights. Each alert fires once, re-arms only after the problem clears, and is removed from your phone when it's resolved.
 - **Door open alert.** Tells you which door or the hood has been left open, as a time-sensitive notification that gets through Focus.
 - **Garage door.** Opens when the vehicle arrives home and closes a while after you park.
@@ -57,7 +58,7 @@ Ford Assistant's entities appear on your vehicle's existing device page, next to
 
 | Type | Entities |
 | --- | --- |
-| Switch | One per feature: auto-lock, lock at night, pre-conditioning, work prompt, auto-extend, the remote start Live Activity, each alert, garage open and garage close, clearing resolved notifications, and quiet hours. Electric and plug-in hybrid vehicles also get plug-in reminder and charging alert switches. |
+| Switch | One per feature: auto-lock, lock at night, pre-conditioning, work prompt, auto-extend, the remote start and vehicle status Live Activities, each alert, garage open and garage close, clearing resolved notifications, and quiet hours. Electric and plug-in hybrid vehicles also get plug-in reminder and charging alert switches. |
 | Number | Auto-lock delay, walk-away distance, cold and hot start limits, minimum fuel to start, extend threshold, fuel / oil / 12V battery thresholds, door open alert delay, garage close delay, and (electric/plug-in hybrid) the plug-in reminder battery level |
 | Time | Pre-conditioning time, leaving-work prompt time, night lock time, quiet hours start and end, and (electric/plug-in hybrid) plug-in reminder time |
 | Sensor | Last event: the most recent alert or action, with its message and time |
@@ -89,9 +90,26 @@ Event data: `vin`, `config_entry_id`, `type`, `title`, `message`. Types: `autolo
 
 When you add Ford Assistant, it looks for a **FordPass – Vehicle Assistant** blueprint automation that controls the same vehicle. Pick it to copy its phones, places, days, feature toggles, thresholds and times, and leave **Turn off the blueprint automation** checked so you don't get every notification twice. The automation is only turned off, not deleted.
 
-## Live Activity
+## Live Activities
 
-While remote start is running, Ford Assistant sends a Live Activity (iOS) or Live Update (Android) through the Companion app, counting down the time left with **Stop** and **Extend** buttons. Your phone counts down by itself, so it's only updated when the time jumps, like after an extend. Turn it off with the **Remote start Live Activity** switch to get a regular "warming up" notification instead.
+Live Activities need the Home Assistant Companion app on iOS 17.2 or later (Live Updates on Android 16 or later) and Home Assistant 2026.7 or later. Tapping one opens the vehicle's device page.
+
+### Remote start
+
+While remote start is running, Ford Assistant shows a Live Activity counting down the time left. Your phone counts down by itself, so it's only updated when the time jumps, like after an extend. On Android it also has **Stop** and **Extend** buttons; iOS doesn't support buttons in Live Activities. Turn it off with the **Remote start Live Activity** switch to get a regular "warming up" notification instead.
+
+### Vehicle status
+
+Turn on **Vehicle status Live Activity** to keep your vehicle's status on the lock screen at all times:
+
+- **Headline** (Dynamic Island and status bar): Locked, Unlocked, Door open, Running, Driving or Alarm.
+- **Details**: open doors and windows, lock state, fuel or battery with range, charging, home or the zone it's in, and outside temperature.
+- **Progress bar**: fuel or battery level.
+- It turns red when something needs attention: unlocked or windows open away from home, a door open, or the alarm going off.
+- While remote start runs, it shows the countdown, so you don't get a second activity.
+- On Android it has **Lock** and **Start**/**Stop** buttons.
+
+To be easy on your phone, it only updates when something you'd see changes. Lock, door, remote start and alarm changes show right away; small fuel, temperature or location changes go out quietly at most every 5 minutes. iOS ends any Live Activity after 8 hours, so Ford Assistant quietly restarts it before then.
 
 ## Diagnostics
 

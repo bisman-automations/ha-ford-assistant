@@ -159,6 +159,9 @@
       },
       "charge_alert": {
         "name": "Charging alert"
+      },
+      "status_activity": {
+        "name": "Vehicle status Live Activity"
       }
     },
     "number": {

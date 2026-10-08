@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-08
+
+### Added
+
+- **Vehicle status Live Activity.** An optional Live Activity (Live Update on Android) that stays on your lock screen showing the vehicle's lock state, open doors and windows, fuel or battery with range, charging, where it is and the outside temperature, with a fuel or battery progress bar. It turns red when something needs attention, shows the remote start countdown while it's running, updates only when something visible changes, and restarts itself before iOS's 8-hour limit. Turn it on with the new **Vehicle status Live Activity** switch.
+
+### Fixed
+
+- The README said the remote start Live Activity has Stop and Extend buttons on iOS. iOS doesn't support buttons in Live Activities; they work on Android.
+
 ## [1.2.0] - 2026-10-07
 
 ### Added

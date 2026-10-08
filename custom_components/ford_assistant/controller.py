@@ -69,6 +69,7 @@ from .const import (
     WINDOW_OPEN_DELAY,
 )
 from .discovery import ford_device, resolve_entities, vehicle_name
+from .status import StatusActivity
 from .logic import (
     action_id,
     active_indicators,
@@ -123,6 +124,8 @@ class FordAssistantController:
         self._activity_sent_minutes: float | None = None
         self._activity_sent_at: datetime | None = None
         self._activity_pending = False
+        # Always-on vehicle status Live Activity
+        self.status = StatusActivity(self)
 
     # ------------------------------------------------------------------ setup
 
@@ -154,6 +157,8 @@ class FordAssistantController:
             self.latched = {k: bool(v) for k, v in stored.get("latched", {}).items()}
             self.shown = set(stored.get("shown", []))
             self._deferred = dict(stored.get("deferred", {}))
+            if started := stored.get("status_started"):
+                self.status.started_at = dt_util.parse_datetime(started)
         elif imported := self.entry.data.get("imported"):
             # First start after importing a blueprint automation's settings.
             for key, value in imported.get("features", {}).items():
@@ -230,10 +235,12 @@ class FordAssistantController:
             self.hass.async_create_task(self._flush_deferred())
         if self._is(e.get("remote_start"), "on"):
             self._schedule_activity_update()
+        self.status.async_start()
 
     @callback
     def async_stop(self) -> None:
         """Tear everything down."""
+        self.status.async_stop()
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
@@ -271,6 +278,9 @@ class FordAssistantController:
             "latched": self.latched,
             "shown": sorted(self.shown),
             "deferred": self._deferred,
+            "status_started": self.status.started_at.isoformat()
+            if self.status.started_at
+            else None,
         }
 
     @callback
@@ -283,6 +293,14 @@ class FordAssistantController:
             self.hass.async_create_task(self._flush_deferred())
         if key == "remote_start_activity" and not value and self._activity_active:
             self.hass.async_create_task(self._activity_end())
+        if key == "status_activity":
+            if value:
+                # The status activity shows remote start itself.
+                if self._activity_active:
+                    self.hass.async_create_task(self._activity_end())
+                self.hass.async_create_task(self.status.async_turned_on())
+            else:
+                self.hass.async_create_task(self.status.async_turned_off())
         self._save()
         self._notify_listeners()
 
@@ -762,8 +780,8 @@ class FordAssistantController:
         if await self._call("switch", "turn_on", "remote_start"):
             title = f"{self.name} is warming up"
             message = f"{self._temp_text()}Remote started."
-            if self._activity_enabled():
-                # The Live Activity shows it (with a Stop button) instead.
+            if self._activity_enabled() or self.features["status_activity"]:
+                # A Live Activity shows it instead.
                 self._record("start", title, message)
             else:
                 await self._notify("start", title, message, actions=["STOP"])
@@ -804,7 +822,12 @@ class FordAssistantController:
         return f"ford-activity-{self.vin}"
 
     def _activity_enabled(self) -> bool:
-        return self.features["remote_start_activity"] and bool(self.options.get(CONF_NOTIFY_DEVICES))
+        # With the status activity on, remote start shows there instead.
+        return (
+            self.features["remote_start_activity"]
+            and not self.features["status_activity"]
+            and bool(self.options.get(CONF_NOTIFY_DEVICES))
+        )
 
     def _activity_due(self, minutes: float | None) -> bool:
         """Send a new update only when the phone's own countdown would be wrong.

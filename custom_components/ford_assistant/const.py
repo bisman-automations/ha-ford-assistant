@@ -77,6 +77,7 @@ FEATURES: Final[dict[str, bool]] = {
     "clear_resolved": True,
     "quiet_hours": False,
     "remote_start_activity": True,
+    "status_activity": False,
     "plug_in_reminder": True,
     "charge_alert": True,
 }
