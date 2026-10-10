@@ -70,6 +70,7 @@ from .const import (
     WINDOW_OPEN_DELAY,
 )
 from .discovery import ford_device, resolve_entities, vehicle_name
+from .compat import device_entry_ids
 from .status import StatusActivity
 from .logic import (
     action_id,
@@ -101,6 +102,7 @@ class FordAssistantController:
         self.hass = hass
         self.entry = entry
         self.vin: str = entry.data[CONF_VIN]
+        self.version: str | None = None
         self.entities: dict[str, str] = {}
         self.features: dict[str, bool] = dict(FEATURES)
         self.numbers: dict[str, float] = {k: s.default for k, s in NUMBERS.items()}
@@ -482,7 +484,7 @@ class FordAssistantController:
             device = devices.async_get(device_id)
             if device is None:
                 continue
-            for entry_id in device.config_entries:
+            for entry_id in device_entry_ids(device):
                 entry = self.hass.config_entries.async_get_entry(entry_id)
                 if entry and entry.domain == "mobile_app" and (
                     name := entry.data.get("device_name")

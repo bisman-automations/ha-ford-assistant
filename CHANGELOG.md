@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-10
+
+### Changed
+
+- **Linked to your Ford vehicle.** On Home Assistant 2026.8 and later, Ford Assistant has its own device, named after your vehicle, that shows up under **Linked devices** on the Ford integration's vehicle page, and the vehicle shows up under Linked devices on Ford Assistant's. Existing installs keep their entities and entity IDs; the device Home Assistant already split off for Ford Assistant is reused. On earlier versions nothing changes: the entities stay on the Ford vehicle's device.
+
+### Fixed
+
+- On Home Assistant 2026.8 and later, finding the Ford vehicle could pick Ford Assistant's own device instead, so notification taps and the vehicle name could point at the wrong device.
+- Removed device registry calls that Home Assistant 2026.10 deprecates (`async_get_device`, indexing `devices` and `config_entries`), which logged warnings and would stop working in 2027.
+
 ## [1.3.1] - 2026-10-08
 
 ### Fixed

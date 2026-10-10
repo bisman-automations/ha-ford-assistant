@@ -17,6 +17,8 @@ from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util
 
+from custom_components.ford_assistant.compat import PER_ENTRY_DEVICES
+from custom_components.ford_assistant.discovery import ford_device as ford_vehicle_device
 from custom_components.ford_assistant.const import (
     CONF_NOTIFY_DEVICES,
     DOMAIN,
@@ -46,6 +48,11 @@ STATES = {
     "temperature": ("20", {}),
     "refresh": ("unknown", {}),
 }
+
+
+def _ours(hass: HomeAssistant, platform: str, key: str) -> str | None:
+    """Entity id of one of Ford Assistant's own entities."""
+    return er.async_get(hass).async_get_entity_id(platform, DOMAIN, f"{VIN}_{key}".lower())
 
 
 def _entity_id(role: str) -> str:
@@ -117,10 +124,21 @@ async def test_no_vehicles(hass: HomeAssistant) -> None:
 async def test_entities_join_ford_device(hass: HomeAssistant, ford: str) -> None:
     lock_calls = async_mock_service(hass, "lock", "lock")
     entry = await _setup(hass, ford)
-    device = dr.async_get(hass).async_get_device(identifiers={("fordpass", VIN)})
+    ford_device = ford_vehicle_device(hass, VIN)
     ours = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
-    assert ours and all(e.device_id == device.id for e in ours)
-    assert hass.states.get("switch.vin_1ftest00000000001_auto_lock_away_from_home").state == "on"
+    assert ours
+    if PER_ENTRY_DEVICES:
+        # Own device, linked to the Ford vehicle through the shared identifier.
+        own = dr.async_get(hass).async_get(ours[0].device_id)
+        assert own.id != ford_device.id
+        assert all(e.device_id == own.id for e in ours)
+        assert own.name == "2022 Escape (000001)"
+        assert own.model == "Ford Assistant"
+        linked = dr.async_get(hass).async_get_devices(identifiers=own.identifiers)
+        assert {d.id for d in linked} == {own.id, ford_device.id}
+    else:
+        assert all(e.device_id == ford_device.id for e in ours)
+    assert hass.states.get(_ours(hass, "switch", "auto_lock")).state == "on"
     assert not lock_calls
 
 
@@ -317,3 +335,30 @@ async def test_door_open_requests_refresh_once(hass: HomeAssistant, ford: str) -
         async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=minutes))
         await hass.async_block_till_done()
     assert [c.data["entity_id"] for c in press_calls] == [_entity_id("refresh")]
+
+
+@pytest.mark.skipif(not PER_ENTRY_DEVICES, reason="HA 2026.8+ device registry")
+async def test_existing_split_device_is_adopted(hass: HomeAssistant, ford: str) -> None:
+    """After HA's 2026.8 split, Ford Assistant's device is reused, not duplicated."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="2022 Escape (000001)",
+        unique_id=VIN,
+        data={"vin": VIN},
+        options={CONF_NOTIFY_DEVICES: [ford], "home_zone": "zone.home"},
+    )
+    entry.add_to_hass(hass)
+    split = dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={("fordpass", VIN)},
+        name=f"VIN: {VIN}",
+    )
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    ours = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
+    assert ours and all(e.device_id == split.id for e in ours)
+    device = dr.async_get(hass).async_get(split.id)
+    assert device.model == "Ford Assistant"
+    assert (DOMAIN, VIN) in device.identifiers
+    assert len(dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)) == 1

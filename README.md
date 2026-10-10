@@ -54,7 +54,7 @@ Add Ford Assistant once per vehicle. Change notify targets, zones, and the days 
 
 ## Entities
 
-Ford Assistant's entities appear on your vehicle's existing device page, next to the Ford integration's own.
+On Home Assistant 2026.8 and later, Ford Assistant has its own device named after your vehicle, shown under **Linked devices** on the Ford integration's vehicle page (and the other way around), so you can jump between them. On earlier versions its entities appear directly on the Ford integration's vehicle device.
 
 | Type | Entities |
 | --- | --- |

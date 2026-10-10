@@ -5,13 +5,18 @@ from __future__ import annotations
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 
+from .compat import all_devices, device_in_domain, devices_with_identifier
 from .const import FORD_DOMAIN, FORD_ENTITY_KEYS
 
 
 def ford_vehicles(hass: HomeAssistant) -> dict[str, str]:
     """Return {vin: display name} for every vehicle the Ford integration set up."""
     vehicles: dict[str, str] = {}
-    for device in dr.async_get(hass).devices.values():
+    for device in all_devices(hass):
+        # Only the Ford integration's own device, not linked devices (like
+        # Ford Assistant's) that reuse its identifier.
+        if device_in_domain(hass, [device], FORD_DOMAIN) is None:
+            continue
         for domain, identifier in device.identifiers:
             if domain == FORD_DOMAIN:
                 vehicles[identifier] = vehicle_name(device, identifier)
@@ -30,7 +35,8 @@ def vehicle_name(device: dr.DeviceEntry | None, vin: str) -> str:
 
 def ford_device(hass: HomeAssistant, vin: str) -> dr.DeviceEntry | None:
     """The Ford integration's device for this VIN."""
-    return dr.async_get(hass).async_get_device(identifiers={(FORD_DOMAIN, vin)})
+    devices = devices_with_identifier(hass, (FORD_DOMAIN, vin))
+    return device_in_domain(hass, devices, FORD_DOMAIN) or (devices[0] if devices else None)
 
 
 def resolve_entities(hass: HomeAssistant, vin: str) -> dict[str, str]:

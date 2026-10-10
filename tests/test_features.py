@@ -17,7 +17,9 @@ from custom_components.ford_assistant.const import CONF_NOTIFY_DEVICES, DOMAIN
 from custom_components.ford_assistant.importer import convert
 from custom_components.ford_assistant.logic import in_quiet_hours
 
-from .test_init import HOME, VIN, _clears, _entity_id, _setup, ford  # noqa: F401, F811
+from custom_components.ford_assistant.discovery import ford_device as ford_vehicle_device
+
+from .test_init import HOME, VIN, _clears, _entity_id, _ours, _setup, ford  # noqa: F401, F811
 
 LIVE = "ford-activity-" + VIN
 
@@ -119,7 +121,7 @@ async def test_extend_button(hass: HomeAssistant, ford: str) -> None:
 async def _add_ev(hass: HomeAssistant) -> None:
     registry = er.async_get(hass)
     ford_entry = hass.config_entries.async_entries("fordpass")[0]
-    device = dr.async_get(hass).async_get_device(identifiers={("fordpass", VIN)})
+    device = ford_vehicle_device(hass, VIN)
     for role, key, state, attrs in (
         ("soc", "soc", "30", {"batteryRange": 60}),
         ("ev_plug", "elvehplug", "DISCONNECTED", {}),
@@ -138,7 +140,7 @@ async def _add_ev(hass: HomeAssistant) -> None:
 
 async def test_gas_vehicle_has_no_ev_entities(hass: HomeAssistant, ford: str) -> None:
     await _setup(hass, ford)
-    assert hass.states.get("switch.vin_1ftest00000000001_plug_in_reminder") is None
+    assert _ours(hass, "switch", "plug_in_reminder") is None
 
 
 async def test_ev_plug_in_and_charging(hass: HomeAssistant, ford: str) -> None:
@@ -146,7 +148,7 @@ async def test_ev_plug_in_and_charging(hass: HomeAssistant, ford: str) -> None:
     hass.states.async_set(_entity_id("tracker"), "home", {**HOME, "gps_accuracy": 5})
     notify_calls = async_mock_service(hass, "notify", "mobile_app_my_phone")
     entry = await _setup(hass, ford)
-    assert hass.states.get("switch.vin_1ftest00000000001_plug_in_reminder").state == "on"
+    assert hass.states.get(_ours(hass, "switch", "plug_in_reminder")).state == "on"
 
     await entry.runtime_data._plug_in_reminder()
     assert notify_calls[-1].data["title"] == "🔌 Plug in the 2022 Escape (000001)?"

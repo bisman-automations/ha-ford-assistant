@@ -7,6 +7,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.loader import async_get_integration
 
 from .const import CONF_VIN, DOMAIN, REQUIRED_ROLES
 from .controller import FordAssistantController
@@ -24,6 +25,7 @@ type FordAssistantConfigEntry = ConfigEntry[FordAssistantController]
 async def async_setup_entry(hass: HomeAssistant, entry: FordAssistantConfigEntry) -> bool:
     """Set up Ford Assistant for one vehicle."""
     controller = FordAssistantController(hass, entry)
+    controller.version = str((await async_get_integration(hass, DOMAIN)).version)
     await controller.async_load()
 
     issue_id = f"missing_entities_{entry.entry_id}"
