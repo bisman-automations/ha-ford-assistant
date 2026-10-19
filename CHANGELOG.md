@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-10-18
+
+### Changed
+
+- The HACS check now runs every validation, including the brand icon, so the integration can be listed in the HACS catalog.
+
 ## [1.4.0] - 2026-10-10
 
 ### Changed
