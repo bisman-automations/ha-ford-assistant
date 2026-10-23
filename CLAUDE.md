@@ -30,6 +30,8 @@ renamed the app, though the domain is still `fordpass`.
 | `config_flow.py` | Pick a Ford vehicle → optionally import a blueprint automation → phones, zones, weather, to-do, garage. The options flow (`OptionsFlowWithReload`) changes those plus days and alarm states. |
 | `controller.py` | `FordAssistantController`: all runtime logic for one vehicle (listeners, timers, notifications, alerts, commands). Settings persist through a `Store`. |
 | `status.py` | The always-on vehicle status Live Activity (`StatusActivity`). |
+| `panel.py` | The sidebar dashboard: registers the panel (only when the frontend is loaded), serves `frontend/`, and the `ford_assistant/vehicles` websocket command. |
+| `frontend/ford-assistant-panel.js` | The dashboard web component. Plain JS with no build step or external libraries; it renders from the live `hass` object and calls services through it. |
 | `logic.py` | Pure helpers with no HA state access; put testable logic here. |
 | `discovery.py` | Finds Ford vehicles, the Ford device and the Ford entities. |
 | `compat.py` | Device registry helpers that work before and after HA 2026.8. |
@@ -102,6 +104,19 @@ sharing an identifier or connection are shown as **Linked devices**.
   `DeviceEntry.config_entries`.** They're deprecated in 2026.10 and stop working in 2027.
   To find the Ford vehicle's own device, use `discovery.ford_device()`; on 2026.8+ a plain
   identifier lookup can return Ford Assistant's device instead.
+
+## Dashboard
+
+- The panel is a vanilla custom element (`ford-assistant-panel`) using only HA CSS variables and
+  HA's own `ha-icon` / `ha-menu-button`, so it themes and works offline. Keep it dependency-free.
+- It asks the backend once for vehicles and entity IDs (`ford_assistant/vehicles`); everything
+  else comes from `hass.states`. Add new Ford roles to `FORD_ENTITY_KEYS` and they're sent along.
+- Unlock, remote start and opening the garage must confirm first. Button entities sit at
+  `unknown` until pressed, so only treat `unavailable` as unusable.
+- Check `node --check` on the JS, and render it in Chromium with a fake `hass` (Playwright is
+  available) in light and dark themes and at phone width before shipping UI changes.
+- Tests don't have the frontend package, so the panel isn't registered there; `test_panel.py`
+  patches `panel_custom` and the HTTP static path to test registration.
 
 ## Testing
 

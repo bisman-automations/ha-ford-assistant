@@ -6,11 +6,17 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import config_validation as cv, issue_registry as ir
+from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
 
 from .const import CONF_VIN, DOMAIN, REQUIRED_ROLES
 from .controller import FordAssistantController
+from .panel import (
+    async_register_panel,
+    async_setup_websocket,
+    async_unregister_panel_if_unused,
+)
 
 PLATFORMS: list[Platform] = [
     Platform.NUMBER,
@@ -20,6 +26,14 @@ PLATFORMS: list[Platform] = [
 ]
 
 type FordAssistantConfigEntry = ConfigEntry[FordAssistantController]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up the dashboard's websocket API."""
+    async_setup_websocket(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: FordAssistantConfigEntry) -> bool:
@@ -53,12 +67,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: FordAssistantConfigEntry
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     controller.async_start()
     entry.async_on_unload(controller.async_stop)
+    await async_register_panel(hass, controller.version)
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: FordAssistantConfigEntry) -> bool:
     """Unload a config entry."""
     await entry.runtime_data.async_flush()
+    async_unregister_panel_if_unused(hass, entry.entry_id)
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 

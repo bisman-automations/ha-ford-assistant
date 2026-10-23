@@ -50,6 +50,9 @@ FORD_ENTITY_KEYS: Final[dict[str, tuple[str, str]]] = {
     "indicators": ("sensor", "indicators"),
     "temperature": ("sensor", "outsidetemp"),
     "refresh": ("button", "request_refresh"),
+    # Shown on the dashboard only
+    "image": ("image", "vehicleimage"),
+    "odometer": ("sensor", "odometer"),
     # Electric and plug-in hybrid vehicles
     "soc": ("sensor", "soc"),
     "ev_plug": ("sensor", "elvehplug"),

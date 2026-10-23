@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-23
+
+### Added
+
+- **Sidebar dashboard.** A Ford Assistant page in the sidebar, added automatically once a vehicle is set up. It shows the vehicle's picture from the Ford integration and a status chip (Locked, Unlocked, Door open, Running, Driving or Alarm). There are controls for lock and unlock, remote start, stop and extend, honk and flash, the garage door and refresh. Unlock, Start and opening the garage ask for confirmation, and buttons show "Sending…" until the vehicle responds. Status tiles cover fuel or battery with range, charging, doors, windows, location, tire pressures, oil life, 12V battery, alarm, warning lights, temperature and odometer, and turn amber or red when something needs attention; tap one for details. Every Ford Assistant feature switch is on the page, grouped by topic, and there's a tab per vehicle when you have more than one.
+- **Loading placeholders.** While the dashboard loads it shows a shimmering outline of the page, and the vehicle picture fades in once it has loaded.
+
 ## [1.4.1] - 2026-10-18
 
 ### Changed

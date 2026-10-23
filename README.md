@@ -9,6 +9,7 @@
 
 A companion to the [Ford integration](https://github.com/marq24/ha-fordpass) for Home Assistant. It turns your Ford or Lincoln's entities into ready-to-use features, each one a switch you can flip from a dashboard or your own automations.
 
+- **Sidebar dashboard.** A Ford Assistant page in the sidebar with your vehicle's picture, its status at a glance, one-tap controls and every Ford Assistant feature switch.
 - **Auto-lock away from home.** Locks the doors if they're left unlocked with the ignition off and doors closed, optionally waiting until your phone has walked away.
 - **Lock at night.** Locks it at bedtime wherever it's parked, or tells you which door is open.
 - **Morning pre-conditioning.** Remote starts at a set time on chosen days when it's colder or hotter than your limits and there's enough fuel.
@@ -89,6 +90,18 @@ Event data: `vin`, `config_entry_id`, `type`, `title`, `message`. Types: `autolo
 ## Coming from the blueprint
 
 When you add Ford Assistant, it looks for a **FordPass – Vehicle Assistant** blueprint automation that controls the same vehicle. Pick it to copy its phones, places, days, feature toggles, thresholds and times, and leave **Turn off the blueprint automation** checked so you don't get every notification twice. The automation is only turned off, not deleted.
+
+## Dashboard
+
+Ford Assistant adds a **Ford Assistant** page to the Home Assistant sidebar as soon as a vehicle is set up. There's nothing to configure.
+
+- **Your vehicle** front and center, using the picture from the Ford integration (recent versions; older ones show a placeholder), with a status chip: Locked, Unlocked, Door open, Running, Driving or Alarm.
+- **Controls**: Lock or Unlock, remote Start or Stop (and Extend while running), Honk & Flash, the garage door if you've set one, and Refresh. Unlock, Start and opening the garage ask you to confirm first. A button shows "Sending…" until the vehicle reports back, since Ford commands can take a while.
+- **Status tiles**: fuel or battery with range, charging, remote start time left, doors, windows, location, tire pressures, oil life, 12V battery, alarm, warning lights, outside temperature and odometer. Tiles turn amber or red when something needs attention, and tapping one opens its details.
+- **Ford Assistant features**, grouped by Security, Remote start, Alerts, Garage and Notifications, each with an on/off switch, plus a shortcut to the thresholds and times.
+- With more than one vehicle, a tab for each.
+
+While it loads, the page shows a placeholder layout so it doesn't jump around, and the vehicle picture fades in once it's ready. To hide the page, long-press the sidebar title and remove it there.
 
 ## Live Activities
 
