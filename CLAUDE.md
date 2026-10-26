@@ -1,4 +1,4 @@
-# Ford Assistant: notes for Claude
+# Ford Assistant: notes for Claude and other coding agents
 
 Ford Assistant (`ford_assistant`) is a HACS custom integration that's a companion to
 marq24's Ford integration (`fordpass`, https://github.com/marq24/ha-fordpass). It adds
@@ -120,14 +120,11 @@ sharing an identifier or connection are shown as **Linked devices**.
 
 ## Testing
 
-```bash
-python -m venv .venv && .venv/bin/pip install -r requirements_test.txt
-.venv/bin/pytest -q
-```
+Run the shared checks at the end of this file.
 
-- Python 3.13 installs HA 2026.2 (the oldest supported); Python 3.14 installs the latest
-  HA. **Run the tests on both** when touching device registry or other HA APIs. CI runs
-  both (`tests (3.13)` and `tests (3.14)`).
+- `requirements_test_min.txt` (Python 3.13) installs HA 2026.2, the oldest supported;
+  `requirements_test.txt` (Python 3.14) installs the latest. **Run the tests on both**
+  when touching device registry or other HA APIs. CI runs both.
 - Tests use `pytest-homeassistant-custom-component`. The `ford` fixture in
   `tests/test_init.py` fakes a Ford vehicle and a phone; reuse it (and `_setup`,
   `_entity_id`, `_ours`, `_clears`) from other test files.
@@ -136,18 +133,124 @@ python -m venv .venv && .venv/bin/pip install -r requirements_test.txt
 - For timers, call `hass.async_block_till_done()` before advancing time. Code that reads
   `dt_util.utcnow()` needs the `freezer` fixture (`freezer.tick(...)` then
   `async_fire_time_changed(hass)`).
-- Lint: `ruff check custom_components tests --select F,E9,B` (tests may re-import the
-  `ford` fixture, so ignore F811 there).
+- Lint with the shared ruff settings in `pyproject.toml`. Tests import the `ford`
+  fixture from `test_init.py`, which ruff's F811 ignores in `tests/` for that reason.
 - Every new feature or fix gets a test.
 
-## Releases
+## Docs
 
-1. Bump `version` in `manifest.json` (semver: features → minor, fixes → patch).
-2. Add a `## [x.y.z] - YYYY-MM-DD` section to `CHANGELOG.md` (Keep a Changelog:
-   Added / Changed / Fixed), written for users, not developers.
-3. Update `README.md` when behavior, entities or requirements change.
-4. Commit and push to `main`. CI (`validate.yaml`: hassfest, HACS, tests on 3.13 and
-   3.14) must pass.
-5. `draft-release.yml` creates or refreshes a draft GitHub release for the manifest
-   version on every push to `main`. The maintainer publishes it, which creates the tag.
-   Claude can't create releases or tags from its sessions.
+- Update `README.md` when behavior, entities or requirements change.
+- Write CHANGELOG entries for users, not developers.
+
+<!-- BEGIN bisman-automations shared rules -->
+<!-- This block is the same in every bisman-automations repo. Edit it in
+     bisman-automations/.github (templates/CLAUDE.shared.md) and copy it to
+     every repo; the Validate workflow's "standards" job checks it matches. -->
+
+## Shared rules (every bisman-automations repo)
+
+### Releases
+
+- The version lives in `custom_components/<domain>/manifest.json`. Anything
+  else that repeats it is called out in the repo-specific notes below and is
+  bumped in the same commit.
+- Versions follow [Semantic Versioning](https://semver.org): patch for fixes,
+  translations, docs and CI; minor for new features, options or entities;
+  major when something users rely on is removed or renamed (entities,
+  services, events, options) or setup has to be redone.
+- Check what is released before choosing a version:
+  `git ls-remote --tags origin | awk -F/ '{print $3}' | sort -V | tail -1`
+  (`sort -V`: plain sorting puts `v1.10.0` before `v1.9.0`). Never add
+  changes to a released version. If the manifest version has no tag yet,
+  add to its CHANGELOG section instead of bumping again.
+- Every push to `main` ships as a release. In the same push: bump the
+  manifest version, and add a dated `## [X.Y.Z] - YYYY-MM-DD` section to
+  `CHANGELOG.md` (Keep a Changelog: Added, Changed, Deprecated, Removed,
+  Fixed, Security) with its compare link at the bottom. Small follow-ups can
+  collect under `## [Unreleased]` first; move them into the version section
+  when you bump.
+- Ask Donavan before every push. Push fast-forward only: never force-push,
+  rebase or amend anything already pushed, or rewrite history in any other
+  way. Rewriting history orphans the release tags (it broke drafting in
+  ha-button-actions).
+- Pushing to `main` runs **Draft release**, which creates or refreshes a
+  draft `vX.Y.Z` with that version's CHANGELOG section as the notes, the
+  commits since the last release and `<domain>.zip`. **Donavan publishes
+  the draft himself**, and publishing creates the tag. Never create or push
+  tags, publish releases, or edit published releases.
+- Publishing runs **Release check**: the tag must match the manifest version
+  and the CHANGELOG, and be on `main`. If it fails, fix it with a new patch
+  release, not by moving the tag.
+
+### Commits
+
+- Author commits as `Donavan Becker <donavan.becker@icloud.com>` (set
+  `git config user.name` / `user.email` in the clone). HACS's
+  default-repository check needs the submitter to have a fair share of the
+  commits. Credit an AI assistant with a `Co-Authored-By:` trailer if you
+  like, never as the author.
+- Subject lines are plain, imperative and say what changed for the user
+  ("Show Pico remotes as unavailable when Lutron isn't running"). No
+  `fix:`/`feat:` prefixes. Release commits are "Release X.Y.Z".
+- Commit and push only when asked.
+
+### CI (shared workflows)
+
+- `.github/workflows/` holds four thin callers of the reusable workflows in
+  [bisman-automations/.github](https://github.com/bisman-automations/.github):
+  `test.yml` (lint, frontend, pytest on the oldest supported and the newest
+  Home Assistant, plus the upcoming one as information only), `validate.yml`
+  (hassfest, HACS, standards), `draft-release.yml` and `release-check.yml`.
+  Don't add jobs to the callers. Use the shared workflow's inputs, or change
+  the shared workflow so every repo gets the improvement.
+- `requirements_test.txt` leaves `pytest-homeassistant-custom-component`
+  unpinned (newest Home Assistant) and pins ruff (and mypy where used).
+  `requirements_test_min.txt` pins the harness release for the minimum in
+  `hacs.json`: the newest harness release of that month. CI fails if they
+  drift apart.
+- Raising the minimum Home Assistant means changing, together: `hacs.json`,
+  `requirements_test_min.txt`, `python-min` in `test.yml` (3.13 up to
+  2026.2, 3.14 from 2026.3), the README's Home Assistant badge, and a
+  CHANGELOG entry.
+- Home Assistant 2026.3 and newer need Python 3.14 (3.14.2+).
+- The published hassfest rejects `categories` in `manifest.json` and Pillow
+  in `requirements`. Leave both out.
+- Dependabot (`.github/dependabot.yml`) proposes action and pinned-tool
+  updates weekly. It ignores the test harness on purpose.
+- Test and Validate also run every Thursday, the day after Home Assistant's
+  betas come out. The **next** test job (newest pre-release harness) is
+  information only: when it fails, fix the cause before that release ships.
+
+### Before saying work is done
+
+Run from the repo root, in a Python 3.14 venv with `requirements_test.txt`
+installed:
+
+```
+ruff check .
+ruff format --check .
+pytest
+```
+
+Also run `node --test tests/*.mjs` when the repo has Node tests, mypy when
+the repo-specific notes list it, and the tests in a second venv with
+`requirements_test_min.txt` when a change could behave differently on the
+oldest supported Home Assistant. The standards check (also in CI) is
+`python <path to bisman-automations/.github>/scripts/check_repo.py .`.
+
+### Code and docs
+
+- Support every Home Assistant from the `hacs.json` minimum to the newest
+  release. Check for deprecations in the newest release and the beta.
+- Keep entity IDs, unique IDs, service names and event names stable. When
+  one has to change, migrate it and say so under Changed in the CHANGELOG.
+- `strings.json` and `translations/en.json` hold the same keys. Home
+  Assistant reads only `translations/`, so change both in the same commit.
+- Never put personal details in the repo (README, CHANGELOG, code, tests,
+  screenshots): no names, addresses, account or device identifiers, or real
+  entity IDs. Use placeholders such as `light.living_room`.
+- `README.md` is user documentation with the standard header (badges, HACS
+  and "add integration" My buttons) and sections Installation, Setup, ...,
+  Troubleshooting, Development, License. Use plain language and show names,
+  not entity IDs, wherever the UI does.
+<!-- END bisman-automations shared rules -->

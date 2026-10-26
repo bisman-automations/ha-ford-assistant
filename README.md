@@ -1,11 +1,15 @@
 <p align="center">
-  <img src="custom_components/ford_assistant/brand/icon@2x.png" alt="Ford Assistant" width="160">
+  <img src="https://raw.githubusercontent.com/bisman-automations/ha-ford-assistant/main/custom_components/ford_assistant/brand/icon.png" alt="Ford Assistant icon" width="128">
 </p>
 
 # Ford Assistant
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/)
-[![Validate](https://github.com/bisman-automations/ha-ford-assistant/actions/workflows/validate.yaml/badge.svg)](https://github.com/bisman-automations/ha-ford-assistant/actions/workflows/validate.yaml)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.2%2B-blue.svg)](https://www.home-assistant.io/)
+[![GitHub Release](https://img.shields.io/github/v/release/bisman-automations/ha-ford-assistant)](https://github.com/bisman-automations/ha-ford-assistant/releases)
+[![Test](https://github.com/bisman-automations/ha-ford-assistant/actions/workflows/test.yml/badge.svg)](https://github.com/bisman-automations/ha-ford-assistant/actions/workflows/test.yml)
+[![Validate](https://github.com/bisman-automations/ha-ford-assistant/actions/workflows/validate.yml/badge.svg)](https://github.com/bisman-automations/ha-ford-assistant/actions/workflows/validate.yml)
+[![License](https://img.shields.io/github/license/bisman-automations/ha-ford-assistant)](LICENSE)
 
 A companion to the [Ford integration](https://github.com/marq24/ha-fordpass) for Home Assistant. It turns your Ford or Lincoln's entities into ready-to-use features, each one a switch you can flip from a dashboard or your own automations.
 
@@ -36,15 +40,20 @@ A companion to the [Ford integration](https://github.com/marq24/ha-fordpass) for
 
 ### HACS
 
-1. In HACS, open the menu → **Custom repositories**.
-2. Add `https://github.com/bisman-automations/ha-ford-assistant` as an **Integration**.
-3. Install **Ford Assistant** and restart Home Assistant.
+[![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=bisman-automations&repository=ha-ford-assistant&category=integration)
+
+1. Click the button above, or in HACS open the menu, choose **Custom repositories**, and add `https://github.com/bisman-automations/ha-ford-assistant` as an **Integration**.
+2. Download **Ford Assistant** and restart Home Assistant.
+
+Requires **Home Assistant 2026.2 or newer**.
 
 ### Manual
 
-Copy `custom_components/ford_assistant` into your `config/custom_components` folder and restart.
+Download `ford_assistant.zip` from the [latest release](https://github.com/bisman-automations/ha-ford-assistant/releases/latest), unzip it into `config/custom_components/ford_assistant/`, and restart Home Assistant.
 
 ## Setup
+
+[![Open your Home Assistant instance and start setting up Ford Assistant.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=ford_assistant)
 
 1. Go to **Settings → Devices & services → Add integration → Ford Assistant**.
 2. Pick your vehicle. Ford Assistant finds its lock, tracker, sensors, remote start switch and buttons on its own, even if you've renamed them.
@@ -127,3 +136,43 @@ To be easy on your phone, it only updates when something you'd see changes. Lock
 ## Diagnostics
 
 **Settings → Devices & services → Ford Assistant → ⋮ → Download diagnostics** includes the matched Ford entities and their states, with the VIN and locations redacted.
+## Troubleshooting
+
+### Diagnostics and debug logs
+
+When something goes wrong, download diagnostics from **Settings → Devices & services → Ford Assistant → ⋮ → Download diagnostics** and check the file before you share it.
+
+For debug logs, use **Enable debug logging** on the integration page, or add this to `configuration.yaml` and restart:
+
+```yaml
+logger:
+  logs:
+    custom_components.ford_assistant: debug
+```
+
+Then open an [issue](https://github.com/bisman-automations/ha-ford-assistant/issues/new/choose) with the diagnostics, the log, and your Home Assistant and Ford Assistant versions.
+
+## Development
+
+Tests run inside a real Home Assistant through
+[pytest-homeassistant-custom-component](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component).
+You need Python 3.14 for the current Home Assistant.
+
+```bash
+python3.14 -m venv .venv && . .venv/bin/activate
+pip install -r requirements_test.txt
+ruff check . && ruff format --check .
+pytest
+```
+
+To test against the oldest supported Home Assistant (2026.2), use Python 3.13 and
+`pip install -r requirements_test_min.txt` instead.
+
+CI runs the same checks on every push and pull request, on both Home Assistant
+versions, plus hassfest, HACS validation and the shared repo standards, using the
+workflows in [bisman-automations/.github](https://github.com/bisman-automations/.github).
+Releases are drafted from [CHANGELOG.md](CHANGELOG.md); see [CLAUDE.md](CLAUDE.md).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
