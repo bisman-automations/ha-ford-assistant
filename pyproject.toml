@@ -1,7 +1,35 @@
+# Tool settings only: this repo isn't a Python package, and the version lives
+# in custom_components/ford_assistant/manifest.json. The pytest, ruff and coverage
+# settings follow bisman-automations/.github templates/repo/pyproject.toml;
+# anything repo-specific is marked.
+
 [tool.pytest.ini_options]
+testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-testpaths = ["tests"]
 
 [tool.ruff]
+# The oldest Python the minimum Home Assistant in hacs.json runs on.
 target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP", "W"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests import the `ford` fixture from test_init.py and take it as an argument.
+"tests/*" = ["F811"]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+known-first-party = ["custom_components", "homeassistant", "tests"]
+combine-as-imports = true
+split-on-trailing-comma = false
+
+[tool.coverage.run]
+source = ["custom_components/ford_assistant"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
