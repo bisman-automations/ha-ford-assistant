@@ -11,19 +11,20 @@ from pytest_homeassistant_custom_component.common import (
     async_mock_service,
 )
 
-from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
-from homeassistant.helpers import device_registry as dr, entity_registry as er
-from homeassistant.util import dt as dt_util
-
 from custom_components.ford_assistant.compat import PER_ENTRY_DEVICES
-from custom_components.ford_assistant.discovery import ford_device as ford_vehicle_device
 from custom_components.ford_assistant.const import (
     CONF_NOTIFY_DEVICES,
     DOMAIN,
     FORD_ENTITY_KEYS,
 )
+from custom_components.ford_assistant.discovery import (
+    ford_device as ford_vehicle_device,
+)
+from homeassistant import config_entries
+from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.util import dt as dt_util
 
 VIN = "1FTEST00000000001"
 HOME = {"latitude": 46.8, "longitude": -100.78, "radius": 100}
@@ -52,7 +53,9 @@ STATES = {
 
 def _ours(hass: HomeAssistant, platform: str, key: str) -> str | None:
     """Entity id of one of Ford Assistant's own entities."""
-    return er.async_get(hass).async_get_entity_id(platform, DOMAIN, f"{VIN}_{key}".lower())
+    return er.async_get(hass).async_get_entity_id(
+        platform, DOMAIN, f"{VIN}_{key}".lower()
+    )
 
 
 def _entity_id(role: str) -> str:
@@ -204,7 +207,9 @@ async def test_auto_extend(hass: HomeAssistant, ford: str) -> None:
     entry.runtime_data.set_feature("auto_extend", True)
     hass.states.async_set(_entity_id("remote_start"), "on")
     for minutes in ("10", "5", "1.5", "1"):
-        hass.states.async_set(_entity_id("countdown"), minutes, {"unit_of_measurement": "min"})
+        hass.states.async_set(
+            _entity_id("countdown"), minutes, {"unit_of_measurement": "min"}
+        )
         await hass.async_block_till_done()
     assert len(press_calls) == 1
     assert press_calls[0].data["entity_id"] == _entity_id("extend")
@@ -239,7 +244,11 @@ async def test_options_flow(hass: HomeAssistant, ford: str) -> None:
 
 
 def _clears(calls) -> list[str]:
-    return [c.data["data"]["tag"] for c in calls if c.data["message"] == "clear_notification"]
+    return [
+        c.data["data"]["tag"]
+        for c in calls
+        if c.data["message"] == "clear_notification"
+    ]
 
 
 async def test_night_lock(hass: HomeAssistant, ford: str) -> None:
@@ -255,7 +264,9 @@ async def test_night_lock(hass: HomeAssistant, ford: str) -> None:
 
 async def test_night_lock_door_open(hass: HomeAssistant, ford: str) -> None:
     hass.states.async_set(_entity_id("tracker"), "home", {**HOME, "gps_accuracy": 5})
-    hass.states.async_set(_entity_id("doors"), "Open", {"rearLeft": "OPEN", "hood": "OPEN"})
+    hass.states.async_set(
+        _entity_id("doors"), "Open", {"rearLeft": "OPEN", "hood": "OPEN"}
+    )
     lock_calls = async_mock_service(hass, "lock", "lock")
     notify_calls = async_mock_service(hass, "notify", "mobile_app_my_phone")
     entry = await _setup(hass, ford)
@@ -270,7 +281,9 @@ async def test_door_open_alert_and_clear(hass: HomeAssistant, ford: str) -> None
     notify_calls = async_mock_service(hass, "notify", "mobile_app_my_phone")
     await _setup(hass, ford)
 
-    hass.states.async_set(_entity_id("doors"), "Open", {"driverFront": "OPEN", "hood": "CLOSED"})
+    hass.states.async_set(
+        _entity_id("doors"), "Open", {"driverFront": "OPEN", "hood": "CLOSED"}
+    )
     await hass.async_block_till_done()
     for minutes in (11, 22):
         async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=minutes))
@@ -308,7 +321,10 @@ async def test_start_prompt_clears(hass: HomeAssistant, ford: str) -> None:
     hass.states.async_set(_entity_id("remote_start"), "off")
     await hass.async_block_till_done()
     # The prompt and the remote start Live Activity both go away.
-    assert sorted(_clears(notify_calls)) == [f"ford-activity-{VIN}", f"ford-start-{VIN}"]
+    assert sorted(_clears(notify_calls)) == [
+        f"ford-activity-{VIN}",
+        f"ford-start-{VIN}",
+    ]
 
 
 async def test_clearing_can_be_turned_off(hass: HomeAssistant, ford: str) -> None:
@@ -361,4 +377,6 @@ async def test_existing_split_device_is_adopted(hass: HomeAssistant, ford: str) 
     device = dr.async_get(hass).async_get(split.id)
     assert device.model == "Ford Assistant"
     assert (DOMAIN, VIN) in device.identifiers
-    assert len(dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)) == 1
+    assert (
+        len(dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)) == 1
+    )

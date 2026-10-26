@@ -98,7 +98,11 @@ def find_blueprint_automations(
         inputs = (raw.get("use_blueprint") or {}).get("input") or {}
         if inputs.get("lock_entity") != lock_entity_id:
             continue
-        name = (entity.name if isinstance(entity.name, str) else None) or raw.get("alias") or entity.entity_id
+        name = (
+            (entity.name if isinstance(entity.name, str) else None)
+            or raw.get("alias")
+            or entity.entity_id
+        )
         found.append(convert(entity.entity_id, name, inputs))
     return found
 
@@ -147,7 +151,10 @@ def convert(entity_id: str, name: str, inputs: dict[str, Any]) -> BlueprintSetti
         if key in inputs and (minutes := _minutes(inputs[key])) is not None:
             result.numbers[number] = max(1.0, minutes)
 
-    if "garage_close_after" in inputs and (minutes := _minutes(inputs["garage_close_after"])) is not None:
+    if (
+        "garage_close_after" in inputs
+        and (minutes := _minutes(inputs["garage_close_after"])) is not None
+    ):
         if minutes <= 0:
             result.features["garage_close"] = False
         else:

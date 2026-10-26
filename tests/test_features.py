@@ -7,17 +7,17 @@ from unittest.mock import patch
 
 from pytest_homeassistant_custom_component.common import async_mock_service
 
+from custom_components.ford_assistant.const import CONF_NOTIFY_DEVICES, DOMAIN
+from custom_components.ford_assistant.discovery import (
+    ford_device as ford_vehicle_device,
+)
+from custom_components.ford_assistant.importer import convert
+from custom_components.ford_assistant.logic import in_quiet_hours
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
-
-from custom_components.ford_assistant.const import CONF_NOTIFY_DEVICES, DOMAIN
-from custom_components.ford_assistant.importer import convert
-from custom_components.ford_assistant.logic import in_quiet_hours
-
-from custom_components.ford_assistant.discovery import ford_device as ford_vehicle_device
 
 from .test_init import HOME, VIN, _clears, _entity_id, _ours, _setup, ford  # noqa: F401, F811
 
@@ -26,8 +26,12 @@ LIVE = "ford-activity-" + VIN
 
 def _quiet_now(controller) -> None:
     now = dt_util.now()
-    controller.set_time("quiet_start", (now - timedelta(hours=1)).time().replace(microsecond=0))
-    controller.set_time("quiet_end", (now + timedelta(hours=1)).time().replace(microsecond=0))
+    controller.set_time(
+        "quiet_start", (now - timedelta(hours=1)).time().replace(microsecond=0)
+    )
+    controller.set_time(
+        "quiet_end", (now + timedelta(hours=1)).time().replace(microsecond=0)
+    )
     controller.set_feature("quiet_hours", True)
 
 
@@ -172,7 +176,9 @@ async def test_ev_plug_in_and_charging(hass: HomeAssistant, ford: str) -> None:
     await hass.async_block_till_done()
     assert notify_calls[-1].data["title"].endswith("charging stopped")
     assert notify_calls[-1].data["message"].startswith("The charger wasn't detected.")
-    assert notify_calls[-1].data["data"]["push"] == {"interruption-level": "time-sensitive"}
+    assert notify_calls[-1].data["data"]["push"] == {
+        "interruption-level": "time-sensitive"
+    }
 
 
 BLUEPRINT_INPUTS = {
@@ -196,14 +202,24 @@ def test_convert_blueprint_inputs() -> None:
     assert result.options[CONF_NOTIFY_DEVICES] == ["phone1", "phone2"]
     assert result.options["work_prompt_days"] == ["tue", "wed", "thu"]
     assert result.options["garage_cover"] == "cover.garage"
-    assert result.features == {"work_prompt": True, "auto_extend": True, "garage_close": False}
+    assert result.features == {
+        "work_prompt": True,
+        "auto_extend": True,
+        "garage_close": False,
+    }
     assert result.numbers == {"auto_lock_delay": 5.0}
     assert result.times == {"work_prompt_time": "16:57:00"}
 
 
 async def test_import_from_blueprint(hass: HomeAssistant, ford: str) -> None:
     inputs = {**BLUEPRINT_INPUTS, "notify_device": [ford]}
-    found = [convert("automation.fordpass_vehicle_assistant", "FordPass – Vehicle Assistant", inputs)]
+    found = [
+        convert(
+            "automation.fordpass_vehicle_assistant",
+            "FordPass – Vehicle Assistant",
+            inputs,
+        )
+    ]
     turn_off = async_mock_service(hass, "automation", "turn_off")
 
     with patch(
@@ -213,16 +229,25 @@ async def test_import_from_blueprint(hass: HomeAssistant, ford: str) -> None:
         result = await hass.config_entries.flow.async_init(
             DOMAIN, context={"source": config_entries.SOURCE_USER}
         )
-        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"vin": VIN})
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"vin": VIN}
+        )
         assert result["step_id"] == "import_blueprint"
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
-            {"automation": "automation.fordpass_vehicle_assistant", "disable_automation": True},
+            {
+                "automation": "automation.fordpass_vehicle_assistant",
+                "disable_automation": True,
+            },
         )
         assert result["step_id"] == "settings"
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
-            {CONF_NOTIFY_DEVICES: [ford], "home_zone": "zone.home", "garage_cover": "cover.garage"},
+            {
+                CONF_NOTIFY_DEVICES: [ford],
+                "home_zone": "zone.home",
+                "garage_cover": "cover.garage",
+            },
         )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
@@ -247,7 +272,9 @@ async def test_import_skip(hass: HomeAssistant, ford: str) -> None:
         result = await hass.config_entries.flow.async_init(
             DOMAIN, context={"source": config_entries.SOURCE_USER}
         )
-        result = await hass.config_entries.flow.async_configure(result["flow_id"], {"vin": VIN})
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"vin": VIN}
+        )
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"automation": "skip", "disable_automation": True}
         )

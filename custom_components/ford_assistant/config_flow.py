@@ -196,8 +196,12 @@ class FordAssistantConfigFlow(ConfigFlow, domain=DOMAIN):
                 title=ford_vehicles(self.hass).get(self._vin, self._vin),
                 data=data,
                 options={
-                    CONF_PRECONDITION_DAYS: imported.get(CONF_PRECONDITION_DAYS, DEFAULT_DAYS),
-                    CONF_WORK_PROMPT_DAYS: imported.get(CONF_WORK_PROMPT_DAYS, DEFAULT_DAYS),
+                    CONF_PRECONDITION_DAYS: imported.get(
+                        CONF_PRECONDITION_DAYS, DEFAULT_DAYS
+                    ),
+                    CONF_WORK_PROMPT_DAYS: imported.get(
+                        CONF_WORK_PROMPT_DAYS, DEFAULT_DAYS
+                    ),
                     CONF_ALARM_NORMAL_STATES: imported.get(
                         CONF_ALARM_NORMAL_STATES, DEFAULT_ALARM_NORMAL_STATES
                     ),
@@ -231,9 +235,7 @@ class FordAssistantOptionsFlow(OptionsFlowWithReload):
                 vol.Required(
                     CONF_PRECONDITION_DAYS, default=DEFAULT_DAYS
                 ): DAY_SELECTOR,
-                vol.Required(
-                    CONF_WORK_PROMPT_DAYS, default=DEFAULT_DAYS
-                ): DAY_SELECTOR,
+                vol.Required(CONF_WORK_PROMPT_DAYS, default=DEFAULT_DAYS): DAY_SELECTOR,
                 vol.Required(
                     CONF_ALARM_NORMAL_STATES, default=DEFAULT_ALARM_NORMAL_STATES
                 ): selector.SelectSelector(

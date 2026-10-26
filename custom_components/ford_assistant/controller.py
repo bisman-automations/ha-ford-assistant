@@ -38,6 +38,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 from homeassistant.util.location import distance as gps_distance
 
+from .compat import device_entry_ids
 from .const import (
     ACTIVITY_COLOR,
     CHARGE_DONE,
@@ -70,8 +71,6 @@ from .const import (
     WINDOW_OPEN_DELAY,
 )
 from .discovery import ford_device, resolve_entities, vehicle_name
-from .compat import device_entry_ids
-from .status import StatusActivity
 from .logic import (
     action_id,
     active_indicators,
@@ -87,6 +86,7 @@ from .logic import (
     tire_summary,
     to_float,
 )
+from .status import StatusActivity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -106,7 +106,9 @@ class FordAssistantController:
         self.entities: dict[str, str] = {}
         self.features: dict[str, bool] = dict(FEATURES)
         self.numbers: dict[str, float] = {k: s.default for k, s in NUMBERS.items()}
-        self.times: dict[str, time] = {k: time.fromisoformat(v) for k, v in TIMES.items()}
+        self.times: dict[str, time] = {
+            k: time.fromisoformat(v) for k, v in TIMES.items()
+        }
         self.latched: dict[str, bool] = {}
         # Notification kinds currently showing on phones (cleared when resolved).
         self.shown: set[str] = set()
@@ -388,10 +390,17 @@ class FordAssistantController:
 
     def _energy(self) -> tuple[float | None, str, float | None]:
         """(level %, "fuel" or "battery", range): fuel if the vehicle has it, else the EV battery."""
-        for role, source, range_attr in (("fuel", "fuel", "fuelRange"), ("soc", "battery", "batteryRange")):
+        for role, source, range_attr in (
+            ("fuel", "fuel", "fuelRange"),
+            ("soc", "battery", "batteryRange"),
+        ):
             if (level := self._number(role)) is not None:
                 state = self._state(role)
-                return level, source, to_float(state.attributes.get(range_attr)) if state else None
+                return (
+                    level,
+                    source,
+                    to_float(state.attributes.get(range_attr)) if state else None,
+                )
         return None, "fuel", None
 
     def _fuel_ok_to_start(self) -> bool:
@@ -422,9 +431,7 @@ class FordAssistantController:
         temp = self._number("temperature")
         return "" if temp is None else f"It's {round(temp)}° outside. "
 
-    def _start_timer(
-        self, key: str, delay: float, action: Callable[[], Any]
-    ) -> None:
+    def _start_timer(self, key: str, delay: float, action: Callable[[], Any]) -> None:
         self._cancel_timer(key)
 
         @callback
@@ -486,8 +493,10 @@ class FordAssistantController:
                 continue
             for entry_id in device_entry_ids(device):
                 entry = self.hass.config_entries.async_get_entry(entry_id)
-                if entry and entry.domain == "mobile_app" and (
-                    name := entry.data.get("device_name")
+                if (
+                    entry
+                    and entry.domain == "mobile_app"
+                    and (name := entry.data.get("device_name"))
                 ):
                     services.append(notify_service_name(name))
         return services
@@ -539,7 +548,8 @@ class FordAssistantController:
             "EXTEND": "Extend",
         }
         return [
-            {"action": action_id(cmd, self.vin), "title": labels[cmd]} for cmd in commands
+            {"action": action_id(cmd, self.vin), "title": labels[cmd]}
+            for cmd in commands
         ]
 
     async def _deliver(self, payload: dict[str, Any]) -> None:
@@ -653,7 +663,9 @@ class FordAssistantController:
                 self._check_garage_close,
             )
             if self._doors_open():
-                self._start_timer("door_open", self._door_open_delay, self._check_door_open)
+                self._start_timer(
+                    "door_open", self._door_open_delay, self._check_door_open
+                )
                 self._schedule_door_recheck()
         elif not off:
             self._cancel_timer("garage_close")
@@ -675,10 +687,14 @@ class FordAssistantController:
             self._latch("door", (False, False))
             # Doors just closed while unlocked: restart the wait.
             if self._is(self.entities.get("lock"), "unlocked"):
-                self._start_timer("auto_lock", self._auto_lock_delay, self._check_auto_lock)
+                self._start_timer(
+                    "auto_lock", self._auto_lock_delay, self._check_auto_lock
+                )
         elif new.state == "Open" and self._ignition_off():
             if "door_open" not in self._timers:
-                self._start_timer("door_open", self._door_open_delay, self._check_door_open)
+                self._start_timer(
+                    "door_open", self._door_open_delay, self._check_door_open
+                )
             self._schedule_door_recheck()
 
     @callback
@@ -688,7 +704,11 @@ class FordAssistantController:
         Ford often reports the driver's door ajar in the update sent as the
         ignition turns off, and the vehicle may not report again when it closes.
         """
-        if self._door_rechecked or "refresh" not in self.entities or "door_recheck" in self._timers:
+        if (
+            self._door_rechecked
+            or "refresh" not in self.entities
+            or "door_recheck" in self._timers
+        ):
             return
         self._start_timer("door_recheck", DOOR_RECHECK_DELAY, self._door_recheck)
 
@@ -696,7 +716,10 @@ class FordAssistantController:
         if not (self._doors_open() and self._ignition_off()) or self._door_rechecked:
             return
         self._door_rechecked = True
-        _LOGGER.debug("%s: door still reported open, requesting a vehicle status refresh", self.name)
+        _LOGGER.debug(
+            "%s: door still reported open, requesting a vehicle status refresh",
+            self.name,
+        )
         await self._call("button", "press", "refresh")
 
     def _open_door_text(self) -> tuple[str, bool]:
@@ -710,7 +733,11 @@ class FordAssistantController:
         return ", ".join(doors[:-1]) + " and " + doors[-1].lower(), True
 
     async def _check_door_open(self) -> None:
-        if not (self.features["door_open_alert"] and self._doors_open() and self._ignition_off()):
+        if not (
+            self.features["door_open_alert"]
+            and self._doors_open()
+            and self._ignition_off()
+        ):
             return
         if not self._latch("door", (True, True)):
             return
@@ -771,7 +798,10 @@ class FordAssistantController:
     async def _night_lock(self) -> None:
         if not self.features["night_lock"]:
             return
-        if not self._is(self.entities.get("lock"), "unlocked") or not self._ignition_off():
+        if (
+            not self._is(self.entities.get("lock"), "unlocked")
+            or not self._ignition_off()
+        ):
             return
         if self._doors_open():
             # Can't lock with a door open; say so (once) instead.
@@ -840,7 +870,11 @@ class FordAssistantController:
             self._clear("start")
             if self._activity_active:
                 self.hass.async_create_task(self._activity_end())
-        elif new.state == "on" and (old is None or old.state != "on") and not self._activity_active:
+        elif (
+            new.state == "on"
+            and (old is None or old.state != "on")
+            and not self._activity_active
+        ):
             self._schedule_activity_update()
 
     # ----------------------------------------------- remote start Live Activity
@@ -888,11 +922,15 @@ class FordAssistantController:
         self.hass.async_create_task(_run())
 
     async def _activity_update(self) -> None:
-        if not self._activity_enabled() or not self._is(self.entities.get("remote_start"), "on"):
+        if not self._activity_enabled() or not self._is(
+            self.entities.get("remote_start"), "on"
+        ):
             return
         state = self._state("countdown")
         minutes = (
-            countdown_minutes(state.state, state.attributes.get(ATTR_UNIT_OF_MEASUREMENT))
+            countdown_minutes(
+                state.state, state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+            )
             if state
             else None
         )
@@ -943,7 +981,9 @@ class FordAssistantController:
         new = event.data["new_state"]
         if new is None:
             return
-        minutes = countdown_minutes(new.state, new.attributes.get(ATTR_UNIT_OF_MEASUREMENT))
+        minutes = countdown_minutes(
+            new.state, new.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+        )
         previous, self._last_countdown = self._last_countdown, minutes
         if (
             minutes
@@ -958,10 +998,16 @@ class FordAssistantController:
         crossed = 0 < minutes < limit and (previous is None or previous >= limit)
         if not crossed or "extend" not in self.entities:
             return
-        if not self._is(self.entities.get("remote_start"), "on") or not self._ignition_off():
+        if (
+            not self._is(self.entities.get("remote_start"), "on")
+            or not self._ignition_off()
+        ):
             return
         now = dt_util.utcnow()
-        if self._last_extend and (now - self._last_extend).total_seconds() < EXTEND_COOLDOWN:
+        if (
+            self._last_extend
+            and (now - self._last_extend).total_seconds() < EXTEND_COOLDOWN
+        ):
             return
         self._last_extend = now
         self.hass.async_create_task(self._extend())
@@ -977,7 +1023,9 @@ class FordAssistantController:
         new, old = event.data["new_state"], event.data["old_state"]
         if new is None or not self.features["alarm_alert"]:
             return
-        normal = self.options.get(CONF_ALARM_NORMAL_STATES) or DEFAULT_ALARM_NORMAL_STATES
+        normal = (
+            self.options.get(CONF_ALARM_NORMAL_STATES) or DEFAULT_ALARM_NORMAL_STATES
+        )
         if new.state in normal:
             self._clear("alarm")
             return
@@ -985,7 +1033,11 @@ class FordAssistantController:
             return
         if old is not None and old.state == new.state:
             return
-        actions = [cmd for cmd, role in (("LOCK", "lock"), ("HONK", "honk")) if role in self.entities]
+        actions = [
+            cmd
+            for cmd, role in (("LOCK", "lock"), ("HONK", "honk"))
+            if role in self.entities
+        ]
         self.hass.async_create_task(
             self._notify(
                 "alarm",
@@ -1044,14 +1096,21 @@ class FordAssistantController:
         if not self.features["fuel_alert"]:
             return
         level, _source, _range = self._energy()
-        if self._latch("fuel", percent_alert(level, self.numbers["fuel_threshold"], self.latched.get("fuel", False))):
+        if self._latch(
+            "fuel",
+            percent_alert(
+                level, self.numbers["fuel_threshold"], self.latched.get("fuel", False)
+            ),
+        ):
             self.hass.async_create_task(self._fuel_notification())
 
     async def _fuel_notification(self) -> None:
         level, source, energy_range = self._energy()
         if level is None:
             return
-        extra = f" (about {round(energy_range)} range)" if energy_range is not None else ""
+        extra = (
+            f" (about {round(energy_range)} range)" if energy_range is not None else ""
+        )
         title = (
             f"⛽ {self.name} fuel is low"
             if source == "fuel"
@@ -1064,12 +1123,19 @@ class FordAssistantController:
         if not self.features["oil_alert"]:
             return
         oil = self._number("oil")
-        if self._latch("oil", percent_alert(oil, self.numbers["oil_threshold"], self.latched.get("oil", False))):
+        if self._latch(
+            "oil",
+            percent_alert(
+                oil, self.numbers["oil_threshold"], self.latched.get("oil", False)
+            ),
+        ):
             self.hass.async_create_task(self._oil_notification(oil))
 
     async def _oil_notification(self, oil: float | None) -> None:
         await self._notify(
-            "oil", f"🛢️ {self.name} oil change due", f"Oil life is at {round(oil or 0)}%."
+            "oil",
+            f"🛢️ {self.name} oil change due",
+            f"Oil life is at {round(oil or 0)}%.",
         )
         if todo := self.options.get(CONF_TODO):
             try:
@@ -1088,12 +1154,23 @@ class FordAssistantController:
         if not self.features["battery_alert"]:
             return
         battery = self._number("battery")
-        if self._latch("battery", percent_alert(battery, self.numbers["battery_threshold"], self.latched.get("battery", False))):
+        if self._latch(
+            "battery",
+            percent_alert(
+                battery,
+                self.numbers["battery_threshold"],
+                self.latched.get("battery", False),
+            ),
+        ):
             state = self._state("battery")
             volts = state.attributes.get("batteryVoltage") if state else None
             extra = f" ({volts} V)" if volts is not None else ""
             self.hass.async_create_task(
-                self._notify("battery", f"🔋 {self.name} 12V battery low", f"{round(battery or 0)}%{extra}.")
+                self._notify(
+                    "battery",
+                    f"🔋 {self.name} 12V battery low",
+                    f"{round(battery or 0)}%{extra}.",
+                )
             )
 
     @callback
@@ -1101,19 +1178,34 @@ class FordAssistantController:
         new = event.data["new_state"]
         if new is None or new.state in BAD_STATES or not self.features["tire_alert"]:
             return
-        if self._latch("tires", state_alert(new.state != "NORMAL_OPERATION", self.latched.get("tires", False))):
+        if self._latch(
+            "tires",
+            state_alert(
+                new.state != "NORMAL_OPERATION", self.latched.get("tires", False)
+            ),
+        ):
             self.hass.async_create_task(
-                self._notify("tires", f"🛞 {self.name} tire pressure", tire_summary(new.state, new.attributes))
+                self._notify(
+                    "tires",
+                    f"🛞 {self.name} tire pressure",
+                    tire_summary(new.state, new.attributes),
+                )
             )
 
     @callback
     def _on_indicators(self, event: Event[EventStateChangedData]) -> None:
         new = event.data["new_state"]
-        if new is None or new.state in BAD_STATES or not self.features["indicator_alert"]:
+        if (
+            new is None
+            or new.state in BAD_STATES
+            or not self.features["indicator_alert"]
+        ):
             return
         lights = active_indicators(new.attributes)
         active = (to_float(new.state) or 0) > 0
-        if self._latch("indicators", state_alert(active, self.latched.get("indicators", False))):
+        if self._latch(
+            "indicators", state_alert(active, self.latched.get("indicators", False))
+        ):
             self.hass.async_create_task(
                 self._notify(
                     "indicators",
@@ -1139,7 +1231,11 @@ class FordAssistantController:
     async def _leaving_work_fuel(self) -> None:
         # A reminder on the way home, even if the low-fuel alert already fired.
         level, _source, _range = self._energy()
-        if self.features["fuel_alert"] and level is not None and level < self.numbers["fuel_threshold"]:
+        if (
+            self.features["fuel_alert"]
+            and level is not None
+            and level < self.numbers["fuel_threshold"]
+        ):
             await self._fuel_notification()
 
     async def _garage_open(self) -> None:
@@ -1173,8 +1269,14 @@ class FordAssistantController:
         if soc is None:
             return ""
         state = self._state("soc")
-        battery_range = to_float(state.attributes.get("batteryRange")) if state else None
-        extra = f" (about {round(battery_range)} range)" if battery_range is not None else ""
+        battery_range = (
+            to_float(state.attributes.get("batteryRange")) if state else None
+        )
+        extra = (
+            f" (about {round(battery_range)} range)"
+            if battery_range is not None
+            else ""
+        )
         return f"Battery is at {round(soc)}%{extra}."
 
     async def _plug_in_reminder(self) -> None:
@@ -1253,9 +1355,13 @@ class FordAssistantController:
             return
         self.hass.async_create_task(self._run_command(command, *target))
 
-    async def _run_command(self, command: str, domain: str, service: str, role: str) -> None:
+    async def _run_command(
+        self, command: str, domain: str, service: str, role: str
+    ) -> None:
         if await self._call(domain, service, role):
-            self._record(f"command_{command.lower()}", f"{command.title()} sent to {self.name}")
+            self._record(
+                f"command_{command.lower()}", f"{command.title()} sent to {self.name}"
+            )
 
     # ------------------------------------------------------------- reload
 

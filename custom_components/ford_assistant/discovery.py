@@ -36,7 +36,9 @@ def vehicle_name(device: dr.DeviceEntry | None, vin: str) -> str:
 def ford_device(hass: HomeAssistant, vin: str) -> dr.DeviceEntry | None:
     """The Ford integration's device for this VIN."""
     devices = devices_with_identifier(hass, (FORD_DOMAIN, vin))
-    return device_in_domain(hass, devices, FORD_DOMAIN) or (devices[0] if devices else None)
+    return device_in_domain(hass, devices, FORD_DOMAIN) or (
+        devices[0] if devices else None
+    )
 
 
 def resolve_entities(hass: HomeAssistant, vin: str) -> dict[str, str]:

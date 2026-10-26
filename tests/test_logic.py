@@ -59,14 +59,24 @@ def test_state_alert() -> None:
 def test_rain_expected() -> None:
     assert rain_expected("rainy", [])
     assert rain_expected("sunny", [{"condition": "cloudy"}, {"condition": "pouring"}])
-    assert rain_expected("sunny", [{"condition": "cloudy", "precipitation_probability": 60}])
-    assert not rain_expected("sunny", [{"condition": "cloudy", "precipitation_probability": 20}])
+    assert rain_expected(
+        "sunny", [{"condition": "cloudy", "precipitation_probability": 60}]
+    )
+    assert not rain_expected(
+        "sunny", [{"condition": "cloudy", "precipitation_probability": 20}]
+    )
     # Only the next three hours count.
-    assert not rain_expected("sunny", [{"condition": "sunny"}] * 3 + [{"condition": "rainy"}])
+    assert not rain_expected(
+        "sunny", [{"condition": "sunny"}] * 3 + [{"condition": "rainy"}]
+    )
 
 
 def test_active_indicators() -> None:
-    attrs = {"checkEngineLight": True, "lowTirePressure_frontLeft": True, "absWarning": False}
+    attrs = {
+        "checkEngineLight": True,
+        "lowTirePressure_frontLeft": True,
+        "absWarning": False,
+    }
     assert active_indicators(attrs) == ["Check engine light", "Low tire pressure"]
 
 
@@ -86,7 +96,12 @@ def test_tire_summary() -> None:
 def test_open_doors() -> None:
     from custom_components.ford_assistant.logic import open_doors
 
-    attrs = {"driverFront": "OPEN", "passengerFront": "CLOSED", "hood": "AJAR", "tailgate": "INVALID"}
+    attrs = {
+        "driverFront": "OPEN",
+        "passengerFront": "CLOSED",
+        "hood": "AJAR",
+        "tailgate": "INVALID",
+    }
     assert open_doors(attrs) == ["Driver front", "Hood"]
 
 

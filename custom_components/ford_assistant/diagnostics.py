@@ -21,10 +21,14 @@ async def async_get_config_entry_diagnostics(
     states = {}
     for role, entity_id in controller.entities.items():
         state = hass.states.get(entity_id)
-        states[role] = None if state is None else {
-            "state": state.state,
-            "attributes": async_redact_data(dict(state.attributes), TO_REDACT),
-        }
+        states[role] = (
+            None
+            if state is None
+            else {
+                "state": state.state,
+                "attributes": async_redact_data(dict(state.attributes), TO_REDACT),
+            }
+        )
     return {
         "data": async_redact_data(dict(entry.data), TO_REDACT),
         "options": dict(entry.options),
@@ -32,9 +36,15 @@ async def async_get_config_entry_diagnostics(
         "numbers": controller.numbers,
         "times": {k: v.isoformat() for k, v in controller.times.items()},
         "latched": controller.latched,
-        "ford_entities": {role: e.replace(controller.vin.lower(), "<vin>") for role, e in controller.entities.items()},
+        "ford_entities": {
+            role: e.replace(controller.vin.lower(), "<vin>")
+            for role, e in controller.entities.items()
+        },
         "ford_states": states,
         "last_event": None
         if controller.last_event is None
-        else {**controller.last_event, "time": controller.last_event["time"].isoformat()},
+        else {
+            **controller.last_event,
+            "time": controller.last_event["time"].isoformat(),
+        },
     }

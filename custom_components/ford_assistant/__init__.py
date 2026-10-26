@@ -36,7 +36,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: FordAssistantConfigEntry) -> bool:
+async def async_setup_entry(
+    hass: HomeAssistant, entry: FordAssistantConfigEntry
+) -> bool:
     """Set up Ford Assistant for one vehicle."""
     controller = FordAssistantController(hass, entry)
     controller.version = str((await async_get_integration(hass, DOMAIN)).version)
@@ -71,14 +73,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: FordAssistantConfigEntry
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: FordAssistantConfigEntry) -> bool:
+async def async_unload_entry(
+    hass: HomeAssistant, entry: FordAssistantConfigEntry
+) -> bool:
     """Unload a config entry."""
     await entry.runtime_data.async_flush()
     async_unregister_panel_if_unused(hass, entry.entry_id)
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def async_remove_entry(hass: HomeAssistant, entry: FordAssistantConfigEntry) -> None:
+async def async_remove_entry(
+    hass: HomeAssistant, entry: FordAssistantConfigEntry
+) -> None:
     """Delete saved settings when the entry is removed."""
     from homeassistant.helpers.storage import Store
 

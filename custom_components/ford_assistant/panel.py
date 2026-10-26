@@ -82,7 +82,9 @@ async def async_register_panel(hass: HomeAssistant, version: str | None) -> None
 
 
 @callback
-def async_unregister_panel_if_unused(hass: HomeAssistant, leaving_entry_id: str) -> None:
+def async_unregister_panel_if_unused(
+    hass: HomeAssistant, leaving_entry_id: str
+) -> None:
     """Remove the panel once no vehicle is set up any more."""
     if not hass.data.get(DATA_PANEL):
         return

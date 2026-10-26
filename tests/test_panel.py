@@ -5,16 +5,17 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry as er
-
 from custom_components.ford_assistant import panel
 from custom_components.ford_assistant.const import FORD_ENTITY_KEYS
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 
 from .test_init import VIN, _ours, _setup, ford  # noqa: F401, F811
 
 
-async def test_vehicles_websocket(hass: HomeAssistant, ford: str, hass_ws_client) -> None:
+async def test_vehicles_websocket(
+    hass: HomeAssistant, ford: str, hass_ws_client
+) -> None:
     await _setup(hass, ford)
     client = await hass_ws_client(hass)
     await client.send_json({"id": 1, "type": "ford_assistant/vehicles"})
@@ -31,8 +32,12 @@ async def test_vehicles_websocket(hass: HomeAssistant, ford: str, hass_ws_client
     switches = vehicle["assistant"]["switch"]
     assert switches["auto_lock"] == _ours(hass, "switch", "auto_lock")
     assert "plug_in_reminder" not in switches  # EV-only, and this is a gas vehicle
-    assert vehicle["assistant"]["number"]["fuel_threshold"] == _ours(hass, "number", "fuel_threshold")
-    assert vehicle["assistant"]["sensor"]["last_event"] == _ours(hass, "sensor", "last_event")
+    assert vehicle["assistant"]["number"]["fuel_threshold"] == _ours(
+        hass, "number", "fuel_threshold"
+    )
+    assert vehicle["assistant"]["sensor"]["last_event"] == _ours(
+        hass, "sensor", "last_event"
+    )
     own = er.async_get(hass).async_get(_ours(hass, "sensor", "last_event"))
     assert vehicle["assistant_device_id"] == own.device_id
 
@@ -56,7 +61,9 @@ async def test_panel_registered_and_removed(hass: HomeAssistant, ford: str) -> N
             "homeassistant.components.http.HomeAssistantHTTP.async_register_static_paths",
             static,
         ),
-        patch("homeassistant.components.panel_custom.async_register_panel", AsyncMock()) as register,
+        patch(
+            "homeassistant.components.panel_custom.async_register_panel", AsyncMock()
+        ) as register,
         patch("homeassistant.components.frontend.async_remove_panel") as remove,
     ):
         entry = await _setup(hass, ford)
@@ -64,7 +71,9 @@ async def test_panel_registered_and_removed(hass: HomeAssistant, ford: str) -> N
         kwargs = register.await_args.kwargs
         assert kwargs["frontend_url_path"] == "ford-assistant"
         assert kwargs["webcomponent_name"] == "ford-assistant-panel"
-        assert kwargs["module_url"].startswith("/ford_assistant_static/ford-assistant-panel.js?v=")
+        assert kwargs["module_url"].startswith(
+            "/ford_assistant_static/ford-assistant-panel.js?v="
+        )
         static.assert_awaited_once()
         (config,) = static.await_args.args[0]
         assert config.url_path == "/ford_assistant_static"
@@ -77,7 +86,9 @@ async def test_panel_registered_and_removed(hass: HomeAssistant, ford: str) -> N
 
 
 async def test_no_panel_without_frontend(hass: HomeAssistant, ford: str) -> None:
-    with patch("homeassistant.components.panel_custom.async_register_panel", AsyncMock()) as register:
+    with patch(
+        "homeassistant.components.panel_custom.async_register_panel", AsyncMock()
+    ) as register:
         await _setup(hass, ford)
     register.assert_not_awaited()
 

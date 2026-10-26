@@ -129,7 +129,13 @@ TIMES: Final[dict[str, str]] = {
 
 # Alerts that fire once, then re-arm when the condition clears.
 LATCHED_ALERTS: Final = (
-    "fuel", "oil", "battery", "tires", "indicators", "windows", "door"
+    "fuel",
+    "oil",
+    "battery",
+    "tires",
+    "indicators",
+    "windows",
+    "door",
 )
 
 # Re-arm hysteresis for percentage alerts (points above threshold).

@@ -13,7 +13,11 @@ from datetime import datetime, timedelta
 import logging
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.const import ATTR_UNIT_OF_MEASUREMENT, STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.const import (
+    ATTR_UNIT_OF_MEASUREMENT,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
+)
 from homeassistant.core import CALLBACK_TYPE, Event, EventStateChangedData, callback
 from homeassistant.helpers.event import (
     async_call_later,
@@ -97,7 +101,9 @@ class StatusActivity:
                 async_track_state_change_event(self.hass, entity_ids, self._on_change)
             )
         self._unsubs.append(
-            async_track_time_interval(self.hass, self._on_interval, timedelta(minutes=15))
+            async_track_time_interval(
+                self.hass, self._on_interval, timedelta(minutes=15)
+            )
         )
         if self.enabled:
             self.hass.async_create_task(self._resume())
@@ -183,7 +189,9 @@ class StatusActivity:
         self._last_sent = None
         self.started_at = None
         self.c._save()
-        await self.c._deliver({"message": "clear_notification", "data": {"tag": self.tag}})
+        await self.c._deliver(
+            {"message": "clear_notification", "data": {"tag": self.tag}}
+        )
 
     # ------------------------------------------------------------- content
 
@@ -194,7 +202,11 @@ class StatusActivity:
         attention = False
 
         alarm = c._value("alarm")
-        normal = c.options.get("alarm_normal_states") or ["ARMED", "PREARMED", "DISARMED"]
+        normal = c.options.get("alarm_normal_states") or [
+            "ARMED",
+            "PREARMED",
+            "DISARMED",
+        ]
         alarm_going = alarm not in BAD and alarm not in normal
 
         running = c._is(c.entities.get("remote_start"), "on")
@@ -259,7 +271,9 @@ class StatusActivity:
         if running:
             state = c._state("countdown")
             minutes = (
-                countdown_minutes(state.state, state.attributes.get(ATTR_UNIT_OF_MEASUREMENT))
+                countdown_minutes(
+                    state.state, state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+                )
                 if state
                 else None
             )
@@ -289,7 +303,9 @@ class StatusActivity:
             "tag": self.tag,
             "live_update": True,
             "critical_text": view.headline,
-            "notification_icon": "mdi:car-connected" if not view.attention else "mdi:car-alert",
+            "notification_icon": "mdi:car-connected"
+            if not view.attention
+            else "mdi:car-alert",
             "notification_icon_color": color,
             "color": color,
             "sticky": True,
