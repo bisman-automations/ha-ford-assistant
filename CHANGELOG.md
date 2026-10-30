@@ -5,13 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.5.1] - 2026-10-26
+## [1.6.0] - 2026-10-30
+
+### Added
+
+- **Who can use Ford Assistant,** at the bottom of the dashboard for admins. Admins always can; an admin checks anyone else who should. Someone who isn't allowed gets a page saying so.
 
 ### Changed
 
+- **Requires Home Assistant 2026.8 or newer.**
+- **Only admins see the dashboard until an admin lets someone else in.** It shows where the vehicle is and can unlock and start it, and before this release anyone with a Home Assistant login could open it. If people who aren't admins use it, check their names under **Who can use Ford Assistant**. Ford Assistant's own switches, thresholds and times follow the same rule; automations always can.
 - The README follows the same layout as the other bisman-automations integrations: a button that opens it in HACS, a button that starts setup, and troubleshooting steps for debug logs and diagnostics.
 - Each release now includes `ford_assistant.zip` for installing without HACS.
 - The changelog no longer keeps an Unreleased section, and the agent notes follow the updated shared release rules.
+
+### Fixed
+
+- **Ford Assistant works on Home Assistant 2026.8.** It couldn't find the Ford vehicle there, so setup failed; 2026.9 and newer weren't affected.
 
 ## [1.5.0] - 2026-10-23
 
@@ -84,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Actionable notifications with Lock, Honk & Flash, Start and Stop buttons.
 - Feature switches, number and time settings on the vehicle's device, a last-event sensor, a `ford_assistant_alert` event, a repair issue for missing Ford entities, and diagnostics.
 
-[1.5.1]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.5.0...v1.5.1
+[1.6.0]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.3.1...v1.4.0
