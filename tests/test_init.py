@@ -11,7 +11,6 @@ from pytest_homeassistant_custom_component.common import (
     async_mock_service,
 )
 
-from custom_components.ford_assistant.compat import PER_ENTRY_DEVICES
 from custom_components.ford_assistant.const import (
     CONF_NOTIFY_DEVICES,
     DOMAIN,
@@ -130,17 +129,14 @@ async def test_entities_join_ford_device(hass: HomeAssistant, ford: str) -> None
     ford_device = ford_vehicle_device(hass, VIN)
     ours = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
     assert ours
-    if PER_ENTRY_DEVICES:
-        # Own device, linked to the Ford vehicle through the shared identifier.
-        own = dr.async_get(hass).async_get(ours[0].device_id)
-        assert own.id != ford_device.id
-        assert all(e.device_id == own.id for e in ours)
-        assert own.name == "2022 Escape (000001)"
-        assert own.model == "Ford Assistant"
-        linked = dr.async_get(hass).async_get_devices(identifiers=own.identifiers)
-        assert {d.id for d in linked} == {own.id, ford_device.id}
-    else:
-        assert all(e.device_id == ford_device.id for e in ours)
+    # Own device, linked to the Ford vehicle through the shared identifier.
+    own = dr.async_get(hass).async_get(ours[0].device_id)
+    assert own.id != ford_device.id
+    assert all(e.device_id == own.id for e in ours)
+    assert own.name == "2022 Escape (000001)"
+    assert own.model == "Ford Assistant"
+    linked = dr.async_get(hass).async_get_devices(identifiers=own.identifiers)
+    assert {d.id for d in linked} == {own.id, ford_device.id}
     assert hass.states.get(_ours(hass, "switch", "auto_lock")).state == "on"
     assert not lock_calls
 
@@ -353,7 +349,6 @@ async def test_door_open_requests_refresh_once(hass: HomeAssistant, ford: str) -
     assert [c.data["entity_id"] for c in press_calls] == [_entity_id("refresh")]
 
 
-@pytest.mark.skipif(not PER_ENTRY_DEVICES, reason="HA 2026.8+ device registry")
 async def test_existing_split_device_is_adopted(hass: HomeAssistant, ford: str) -> None:
     """After HA's 2026.8 split, Ford Assistant's device is reused, not duplicated."""
     entry = MockConfigEntry(

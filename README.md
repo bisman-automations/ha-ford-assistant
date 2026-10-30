@@ -5,7 +5,7 @@
 # Ford Assistant
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/)
-[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.2%2B-blue.svg)](https://www.home-assistant.io/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.8%2B-blue.svg)](https://www.home-assistant.io/)
 [![GitHub Release](https://img.shields.io/github/v/release/bisman-automations/ha-ford-assistant)](https://github.com/bisman-automations/ha-ford-assistant/releases)
 [![Test](https://github.com/bisman-automations/ha-ford-assistant/actions/workflows/test.yml/badge.svg)](https://github.com/bisman-automations/ha-ford-assistant/actions/workflows/test.yml)
 [![Validate](https://github.com/bisman-automations/ha-ford-assistant/actions/workflows/validate.yml/badge.svg)](https://github.com/bisman-automations/ha-ford-assistant/actions/workflows/validate.yml)
@@ -32,7 +32,7 @@ A companion to the [Ford integration](https://github.com/marq24/ha-fordpass) for
 
 ## Requirements
 
-- Home Assistant 2026.2 or newer.
+- Home Assistant 2026.8 or newer.
 - The [Ford integration](https://github.com/marq24/ha-fordpass) set up with your vehicle.
 - The Home Assistant Companion app on the phones that should get notifications.
 
@@ -45,7 +45,7 @@ A companion to the [Ford integration](https://github.com/marq24/ha-fordpass) for
 1. Click the button above, or in HACS open the menu, choose **Custom repositories**, and add `https://github.com/bisman-automations/ha-ford-assistant` as an **Integration**.
 2. Download **Ford Assistant** and restart Home Assistant.
 
-Requires **Home Assistant 2026.2 or newer**.
+Requires **Home Assistant 2026.8 or newer**.
 
 ### Manual
 
@@ -110,6 +110,12 @@ Ford Assistant adds a **Ford Assistant** page to the Home Assistant sidebar as s
 - **Ford Assistant features**, grouped by Security, Remote start, Alerts, Garage and Notifications, each with an on/off switch, plus a shortcut to the thresholds and times.
 - With more than one vehicle, a tab for each.
 
+### Who can use it
+
+Admins always can. The dashboard shows where the vehicle is and can unlock and start it, so anyone else only sees it once an admin checks their name under **Who can use Ford Assistant** at the bottom of the dashboard. The same people can change Ford Assistant's own switches, thresholds and times; automations always can. The Ford integration's own entities keep Home Assistant's usual permissions.
+
+Home Assistant can't show a sidebar entry to only some people, so once anyone who isn't an admin is checked, everyone sees Ford Assistant in the sidebar, and people who aren't checked get a page saying they don't have access.
+
 While it loads, the page shows a placeholder layout so it doesn't jump around, and the vehicle picture fades in once it's ready. To hide the page, long-press the sidebar title and remove it there.
 
 ## Live Activities
@@ -165,7 +171,7 @@ ruff check . && ruff format --check .
 pytest
 ```
 
-To test against the oldest supported Home Assistant (2026.2), use Python 3.13 and
+To test against the oldest supported Home Assistant (2026.8), use Python 3.14 and
 `pip install -r requirements_test_min.txt` instead.
 
 CI runs the same checks on every push and pull request, on both Home Assistant

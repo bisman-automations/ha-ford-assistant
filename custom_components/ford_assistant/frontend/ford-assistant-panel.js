@@ -123,9 +123,71 @@ class FordAssistantPanel extends HTMLElement {
       const match = this._vehicles.find((v) => v.entry_id === saved);
       this._selected = (match || this._vehicles[0] || {}).entry_id || null;
     } catch (err) {
-      this._error = (err && err.message) || String(err);
+      if (err && err.code === "unauthorized") this._denied = true;
+      else this._error = (err && err.message) || String(err);
     }
     this._render(true);
+  }
+
+  // Admins choose who else may use the dashboard.
+  async _loadAccess() {
+    if (this._accessLoading || !this._hass?.user?.is_admin) return;
+    this._accessLoading = true;
+    try {
+      const res = await this._hass.callWS({ type: "ford_assistant/access/get" });
+      this._access = { people: res?.people || [], ids: new Set(res?.user_ids || []) };
+    } catch (err) {
+      this._access = { people: [], ids: new Set(), error: (err && err.message) || String(err) };
+    }
+    this._accessLoading = false;
+    this._render(true);
+  }
+
+  async _saveAccess() {
+    const ids = [...this.shadowRoot.querySelectorAll("[data-access-user]")]
+      .filter((box) => box.checked)
+      .map((box) => box.dataset.accessUser);
+    try {
+      const res = await this._hass.callWS({ type: "ford_assistant/access/set", user_ids: ids });
+      this._access = { people: res?.people || [], ids: new Set(res?.user_ids || []), saved: true };
+    } catch (err) {
+      this._access = { ...this._access, error: (err && err.message) || String(err) };
+    }
+    this._render(true);
+  }
+
+  _accessView() {
+    if (!this._hass?.user?.is_admin) return "";
+    const a = this._access;
+    if (!a) {
+      this._loadAccess();
+      return "";
+    }
+    const others = a.people.filter((p) => !p.is_admin);
+    const rows = others.length
+      ? others
+          .map(
+            (p) => `<label class="access-person"><input type="checkbox" data-action="access"
+              data-access-user="${esc(p.id)}" ${a.ids.has(p.id) ? "checked" : ""}> ${esc(p.name)}</label>`,
+          )
+          .join("")
+      : `<p class="muted">Everyone with a Home Assistant login is an admin.</p>`;
+    const anyone = others.some((p) => a.ids.has(p.id));
+    return `<section class="card access">
+      <h2>Who can use Ford Assistant</h2>
+      <p class="muted">Admins always can. The dashboard shows where the vehicle is and can unlock and start it, so anyone else only sees it if you check them here.</p>
+      <div class="access-people">${rows}</div>
+      ${anyone ? `<p class="muted">Home Assistant can't show a sidebar entry to only some people, so everyone sees Ford Assistant in the sidebar. People who aren't checked get a page saying they don't have access.</p>` : ""}
+      ${a.error ? `<p class="muted" role="alert">${esc(a.error)}</p>` : a.saved ? `<p class="muted" role="status">Access saved</p>` : ""}
+    </section>`;
+  }
+
+  _deniedView() {
+    return `<div class="message card">
+      <ha-icon icon="mdi:lock-outline"></ha-icon>
+      <h2>You don't have access to Ford Assistant</h2>
+      <p>Ask an admin to give you access. They can do it at the bottom of this dashboard.</p>
+    </div>`;
   }
 
   get _vehicle() {
@@ -217,7 +279,9 @@ class FordAssistantPanel extends HTMLElement {
 
     this._renderTabs();
     const content = this.shadowRoot.querySelector(".content");
-    if (this._error) {
+    if (this._denied) {
+      content.innerHTML = this._deniedView();
+    } else if (this._error) {
       content.innerHTML = this._errorView();
     } else if (!this._vehicles) {
       content.innerHTML = this._skeletonView();
@@ -338,6 +402,7 @@ class FordAssistantPanel extends HTMLElement {
       <section class="actions">${this._actions(v)}</section>
       <section class="grid">${this._tiles(v)}</section>
       ${this._featuresView(v)}
+      ${this._accessView()}
     `;
   }
 
@@ -749,6 +814,10 @@ class FordAssistantPanel extends HTMLElement {
         window.history.pushState(null, "", path);
         window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
         return;
+      case "access":
+        // Let the checkbox change first, then save who's checked.
+        setTimeout(() => this._saveAccess(), 0);
+        return;
       case "toggle":
         this._hass.callService("switch", "toggle", { entity_id: entity });
         return;
@@ -878,6 +947,12 @@ const STYLES = `
     max-width: 1100px; margin: 0 auto;
   }
   .tabs[hidden] { display: none; }
+  .access { padding: 16px; }
+  .access h2 { margin: 0 0 8px; font-size: 20px; font-weight: 500; }
+  .access p { margin: 8px 0; font-size: 14px; }
+  .access .access-people { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0; }
+  .access-person { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+  .access .muted { color: var(--fa-muted); }
   .tab {
     border: 1px solid var(--fa-divider); background: var(--fa-card);
     border-radius: 999px; padding: 6px 14px; cursor: pointer; white-space: nowrap;

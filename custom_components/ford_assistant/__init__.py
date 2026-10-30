@@ -10,6 +10,7 @@ from homeassistant.helpers import config_validation as cv, issue_registry as ir
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
 
+from .access import async_get_access
 from .const import CONF_VIN, DOMAIN, REQUIRED_ROLES
 from .controller import FordAssistantController
 from .panel import (
@@ -31,7 +32,8 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the dashboard's websocket API."""
+    """Set up the dashboard's websocket API and who may use it."""
+    await async_get_access(hass)
     async_setup_websocket(hass)
     return True
 

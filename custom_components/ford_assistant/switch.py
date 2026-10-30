@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import FordAssistantConfigEntry
+from .access import async_ensure_allowed
 from .const import EV_FEATURES, FEATURES
 from .entity import FordAssistantEntity
 
@@ -40,8 +41,10 @@ class FeatureSwitch(FordAssistantEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Enable the feature."""
+        await async_ensure_allowed(self.hass, self._context)
         self.controller.set_feature(self._key, True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Disable the feature."""
+        await async_ensure_allowed(self.hass, self._context)
         self.controller.set_feature(self._key, False)

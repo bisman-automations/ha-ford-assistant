@@ -8,6 +8,8 @@ through the frontend's own connection, so it needs no other backend.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from functools import wraps
 import logging
 from pathlib import Path
 from typing import Any
@@ -17,8 +19,10 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import Unauthorized
 from homeassistant.helpers import entity_registry as er
 
+from .access import async_get_access, get_access
 from .const import (
     CONF_GARAGE,
     CONF_HOME_ZONE,
@@ -46,19 +50,51 @@ DATA_STATIC = f"{DOMAIN}_static"
 
 @callback
 def async_setup_websocket(hass: HomeAssistant) -> None:
-    """Register the panel's websocket command (once per run)."""
-    websocket_api.async_register_command(hass, websocket_vehicles)
+    """Register the panel's websocket commands (once per run)."""
+    for command in (
+        websocket_vehicles,
+        websocket_access_me,
+        websocket_access_get,
+        websocket_access_set,
+    ):
+        websocket_api.async_register_command(hass, command)
 
 
-async def async_register_panel(hass: HomeAssistant, version: str | None) -> None:
-    """Show the panel in the sidebar (no-op if it's already there)."""
-    if hass.data.get(DATA_PANEL):
-        return
+def require_access(func: Callable) -> Callable:
+    """Only admins and the people an admin allowed may use the dashboard."""
+
+    @wraps(func)
+    def with_access(
+        hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
+    ) -> None:
+        if not get_access(hass).allows(connection.user):
+            raise Unauthorized
+        func(hass, connection, msg)
+
+    return with_access
+
+
+async def async_register_panel(
+    hass: HomeAssistant, version: str | None, *, update: bool = False
+) -> None:
+    """Show the panel in the sidebar (no-op if it's already there).
+
+    It's admin-only unless an admin let someone who isn't an admin in. Home
+    Assistant can't show a sidebar entry to only some people, so then everyone
+    sees it, and the dashboard tells anyone not allowed that they don't have
+    access.
+    """
+    access = await async_get_access(hass)
     if "frontend" not in hass.config.components or hass.http is None:
         # Not running with a frontend (e.g. tests or a headless setup).
         return
+    require_admin = not await access.async_listed_non_admins()
+    wanted = "admin" if require_admin else "all"
+    registered = hass.data.get(DATA_PANEL)
+    if registered == wanted or (registered and not update):
+        return
 
-    from homeassistant.components import panel_custom
+    from homeassistant.components import frontend, panel_custom
     from homeassistant.components.http import StaticPathConfig
 
     if not hass.data.get(DATA_STATIC):
@@ -66,6 +102,11 @@ async def async_register_panel(hass: HomeAssistant, version: str | None) -> None
             [StaticPathConfig(STATIC_URL, str(FRONTEND_DIR), cache_headers=False)]
         )
         hass.data[DATA_STATIC] = True
+    if registered:
+        frontend.async_remove_panel(hass, PANEL_URL_PATH, warn_if_unknown=False)
+    if version is not None:
+        hass.data[f"{DATA_PANEL}_version"] = version
+    version = hass.data.get(f"{DATA_PANEL}_version")
 
     await panel_custom.async_register_panel(
         hass,
@@ -75,10 +116,10 @@ async def async_register_panel(hass: HomeAssistant, version: str | None) -> None
         sidebar_icon=PANEL_ICON,
         # The version busts the browser cache after an update.
         module_url=f"{STATIC_URL}/ford-assistant-panel.js?v={version or 'dev'}",
-        require_admin=False,
+        require_admin=require_admin,
         config={},
     )
-    hass.data[DATA_PANEL] = True
+    hass.data[DATA_PANEL] = wanted
 
 
 @callback
@@ -149,6 +190,7 @@ def vehicle_summary(hass: HomeAssistant, entry) -> dict[str, Any]:
 
 
 @websocket_api.websocket_command({vol.Required("type"): "ford_assistant/vehicles"})
+@require_access
 @callback
 def websocket_vehicles(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
@@ -161,3 +203,66 @@ def websocket_vehicles(
     ]
     vehicles.sort(key=lambda v: v["name"].casefold())
     connection.send_result(msg["id"], {"vehicles": vehicles})
+
+
+# ---- who may use Ford Assistant -----------------------------------------------------
+
+
+@websocket_api.websocket_command({vol.Required("type"): "ford_assistant/access/me"})
+@callback
+def websocket_access_me(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Whether the person viewing may use the dashboard, so it can say so."""
+    user = connection.user
+    connection.send_result(
+        msg["id"],
+        {
+            "allowed": get_access(hass).allows(user),
+            "is_admin": bool(user and user.is_admin),
+        },
+    )
+
+
+async def _people(hass: HomeAssistant) -> list[dict[str, Any]]:
+    """Home Assistant logins an admin can let in (admins always can)."""
+    users = [
+        u
+        for u in await hass.auth.async_get_users()
+        if not u.system_generated and u.is_active
+    ]
+    return [
+        {"id": u.id, "name": u.name or u.id, "is_admin": u.is_admin}
+        for u in sorted(users, key=lambda u: (u.name or "").casefold())
+    ]
+
+
+@websocket_api.websocket_command({vol.Required("type"): "ford_assistant/access/get"})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def websocket_access_get(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    connection.send_result(
+        msg["id"],
+        {"user_ids": list(get_access(hass).user_ids), "people": await _people(hass)},
+    )
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "ford_assistant/access/set",
+        vol.Required("user_ids"): [str],
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def websocket_access_set(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    access = get_access(hass)
+    await access.async_set(msg["user_ids"])
+    await async_register_panel(hass, None, update=True)
+    connection.send_result(
+        msg["id"], {"user_ids": list(access.user_ids), "people": await _people(hass)}
+    )

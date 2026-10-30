@@ -19,8 +19,12 @@ renamed the app, though the domain is still `fordpass`.
 - **No user-specific details in the repo.** Never put real VINs, entity IDs, device IDs,
   zone names, phone names or other account details in code, tests, the README or the
   changelog; use placeholders like `1FTEST00000000001`.
-- **Support HA 2026.2 (the `hacs.json` minimum) through the latest release.** Use
+- **Support HA 2026.8 (the `hacs.json` minimum) through the latest release.** Use
   `compat.py` for device registry calls (see below), and check APIs exist in both.
+- **Access:** admins plus the people an admin picks (`access.py`, the same model as
+  TV Mgmt). The `ford_assistant/vehicles` websocket command uses `@require_access`, the
+  access commands `require_admin`, and Ford Assistant's switches, numbers and times call
+  `async_ensure_allowed`. The Ford integration's own entities keep HA's permissions.
 
 ## Layout (`custom_components/ford_assistant/`)
 
@@ -89,17 +93,16 @@ renamed the app, though the domain is still `fordpass`.
   `git clone --depth 1 https://github.com/marq24/ha-fordpass`
   (`const_tags.py`, `fordpass_handler.py`).
 
-## Devices (HA 2026.8+ vs older)
+## Devices
 
 HA 2026.8 made devices belong to one config entry; devices from different integrations
 sharing an identifier or connection are shown as **Linked devices**.
 
-- On 2026.8+, Ford Assistant has its own device with identifiers
+- Ford Assistant has its own device with identifiers
   `{(ford_assistant, vin), (fordpass, vin)}`, so it links to the Ford vehicle's device.
-- On older HA, sharing an identifier merges devices, so `device_info()` passes only
-  `(fordpass, vin)` and the entities join the Ford device.
-- Always go through `compat.py` (`PER_ENTRY_DEVICES`, `devices_with_identifier`,
-  `device_in_domain`, `device_entry_ids`, `all_devices`). **Don't call
+- Always go through `compat.py` (`devices_with_identifier`, `device_in_domain`,
+  `device_entry_ids`, `all_devices`). `registry.devices` is a mapping on 2026.8 and an
+  iterable of devices from 2026.9; `all_devices` handles both. **Don't call
   `device_registry.async_get_device`, index `registry.devices`, or read
   `DeviceEntry.config_entries`.** They're deprecated in 2026.10 and stop working in 2027.
   To find the Ford vehicle's own device, use `discovery.ford_device()`; on 2026.8+ a plain
@@ -122,7 +125,7 @@ sharing an identifier or connection are shown as **Linked devices**.
 
 Run the shared checks at the end of this file.
 
-- `requirements_test_min.txt` (Python 3.13) installs HA 2026.2, the oldest supported;
+- `requirements_test_min.txt` (Python 3.14) installs HA 2026.8, the oldest supported;
   `requirements_test.txt` (Python 3.14) installs the latest. **Run the tests on both**
   when touching device registry or other HA APIs. CI runs both.
 - Tests use `pytest-homeassistant-custom-component`. The `ford` fixture in

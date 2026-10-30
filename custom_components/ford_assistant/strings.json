@@ -231,6 +231,9 @@
   "exceptions": {
     "missing_entities": {
       "message": "The Ford integration's door lock or vehicle tracker for {vin} isn't available yet."
+    },
+    "not_allowed": {
+      "message": "You don't have access to Ford Assistant. An admin can give you access on the Ford Assistant dashboard."
     }
   },
   "issues": {

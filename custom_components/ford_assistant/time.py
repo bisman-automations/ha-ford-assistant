@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import FordAssistantConfigEntry
+from .access import async_ensure_allowed
 from .const import EV_TIMES, TIMES
 from .entity import FordAssistantEntity
 
@@ -40,4 +41,5 @@ class ScheduleTime(FordAssistantEntity, TimeEntity):
 
     async def async_set_value(self, value: time) -> None:
         """Change the time."""
+        await async_ensure_allowed(self.hass, self._context)
         self.controller.set_time(self._key, value)

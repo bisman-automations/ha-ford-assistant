@@ -97,3 +97,90 @@ def test_frontend_file_is_shipped() -> None:
     js = Path(panel.FRONTEND_DIR) / "ford-assistant-panel.js"
     assert js.is_file()
     assert 'customElements.define("ford-assistant-panel"' in js.read_text()
+
+
+async def test_only_admins_until_an_admin_lets_someone_in(
+    hass: HomeAssistant, ford: str, hass_ws_client, hass_admin_user
+) -> None:
+    from pytest_homeassistant_custom_component.common import CLIENT_ID
+
+    await _setup(hass, ford)
+    kid = await hass.auth.async_create_user("Kid", group_ids=["system-users"])
+    token = hass.auth.async_create_access_token(
+        await hass.auth.async_create_refresh_token(kid, CLIENT_ID)
+    )
+    reader = await hass_ws_client(hass, token)
+    admin = await hass_ws_client(hass)
+
+    async def ws(client, **message):
+        await client.send_json_auto_id(message)
+        return await client.receive_json()
+
+    me = await ws(reader, type="ford_assistant/access/me")
+    assert me["result"] == {"allowed": False, "is_admin": False}
+    res = await ws(reader, type="ford_assistant/vehicles")
+    assert res["error"]["code"] == "unauthorized"
+    res = await ws(reader, type="ford_assistant/access/set", user_ids=[kid.id])
+    assert res["error"]["code"] == "unauthorized"
+
+    with patch.object(panel, "async_register_panel", AsyncMock()) as register:
+        res = await ws(admin, type="ford_assistant/access/set", user_ids=[kid.id])
+    assert res["result"]["user_ids"] == [kid.id]
+    register.assert_awaited_once()
+    res = await ws(reader, type="ford_assistant/vehicles")
+    assert res["success"]
+
+
+async def test_settings_need_access(
+    hass: HomeAssistant, ford: str, hass_admin_user
+) -> None:
+    import pytest
+
+    from homeassistant.core import Context
+    from homeassistant.exceptions import HomeAssistantError
+
+    await _setup(hass, ford)
+    kid = await hass.auth.async_create_user("Kid", group_ids=["system-users"])
+    switch = _ours(hass, "switch", "auto_lock")
+    with pytest.raises(HomeAssistantError) as err:
+        await hass.services.async_call(
+            "switch",
+            "turn_off",
+            {"entity_id": switch},
+            blocking=True,
+            context=Context(user_id=kid.id),
+        )
+    assert err.value.translation_key == "not_allowed"
+    assert hass.states.get(switch).state == "on"
+    # Automations (no user) and admins may.
+    await hass.services.async_call(
+        "switch", "turn_off", {"entity_id": switch}, blocking=True
+    )
+    assert hass.states.get(switch).state == "off"
+
+
+async def test_panel_shows_to_everyone_once_someone_is_allowed(
+    hass: HomeAssistant, ford: str, hass_admin_user
+) -> None:
+    from custom_components.ford_assistant.access import get_access
+
+    hass.config.components.add("frontend")
+    with (
+        patch(
+            "homeassistant.components.http.HomeAssistantHTTP.async_register_static_paths",
+            AsyncMock(),
+        ),
+        patch(
+            "homeassistant.components.panel_custom.async_register_panel", AsyncMock()
+        ) as register,
+        patch("homeassistant.components.frontend.async_remove_panel") as remove,
+    ):
+        await _setup(hass, ford)
+        assert register.await_args.kwargs["require_admin"] is True
+        kid = await hass.auth.async_create_user("Kid", group_ids=["system-users"])
+        await get_access(hass).async_set([kid.id])
+        await panel.async_register_panel(hass, None, update=True)
+        remove.assert_called_once()
+        assert register.await_args.kwargs["require_admin"] is False
+        assert "?v=" in register.await_args.kwargs["module_url"]
+        assert not register.await_args.kwargs["module_url"].endswith("v=dev")

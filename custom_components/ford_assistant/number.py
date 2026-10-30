@@ -8,6 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import FordAssistantConfigEntry
+from .access import async_ensure_allowed
 from .const import EV_NUMBERS, NUMBERS
 from .entity import FordAssistantEntity
 
@@ -48,4 +49,5 @@ class SettingNumber(FordAssistantEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         """Change the setting."""
+        await async_ensure_allowed(self.hass, self._context)
         self.controller.set_number(self._key, value)
