@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The garage no longer opens when you're already home.** It used to open whenever the vehicle's location changed to home, even when that update came in late (after you'd parked and used the door) or when Home Assistant restarted. Now it only opens for an arrival reported while you're still driving, never in the first 3 minutes after Home Assistant or Ford Assistant starts, not when the door was opened or closed in the last 10 minutes, and only once per arrival.
+- **Activity shows that Ford Assistant opened or closed the garage,** and why, on the garage door's Activity.
 - **Ford Assistant works on Home Assistant 2026.8.** It couldn't find the Ford vehicle there, so setup failed; 2026.9 and newer weren't affected.
 
 ## [1.5.0] - 2026-10-23

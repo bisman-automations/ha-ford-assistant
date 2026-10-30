@@ -14,12 +14,14 @@ from homeassistant.const import (
     ATTR_LATITUDE,
     ATTR_LONGITUDE,
     ATTR_UNIT_OF_MEASUREMENT,
+    EVENT_HOMEASSISTANT_STARTED,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
     UnitOfLength,
 )
 from homeassistant.core import (
     CALLBACK_TYPE,
+    Context,
     Event,
     EventStateChangedData,
     HomeAssistant,
@@ -92,6 +94,15 @@ _LOGGER = logging.getLogger(__name__)
 
 BAD_STATES = (STATE_UNKNOWN, STATE_UNAVAILABLE, None)
 EXTEND_COOLDOWN = 60  # seconds between extend presses
+# Opening the garage on arrival is skipped:
+# - for this long after Home Assistant starts or Ford Assistant loads, while
+#   the Ford integration is still reporting where the vehicle already is;
+GARAGE_STARTUP_GRACE = 180  # seconds
+# - when the garage door opened or closed this recently, because someone
+#   already used it (the arrival was reported late), and for this long after
+#   Ford Assistant opened it, so a jumpy location can't open it twice.
+GARAGE_RECENTLY_USED = 600  # seconds
+EVENT_LOGBOOK_ENTRY = "logbook_entry"
 
 
 class FordAssistantController:
@@ -118,6 +129,10 @@ class FordAssistantController:
         )
         self._listeners: list[CALLBACK_TYPE] = []
         self._unsubs: list[CALLBACK_TYPE] = []
+        # When arrivals may open the garage again after a start; see
+        # GARAGE_STARTUP_GRACE.
+        self._ready_at = dt_util.utcnow()
+        self._garage_opened_at: datetime | None = None
         self._timers: dict[str, CALLBACK_TYPE] = {}
         self._time_unsubs: dict[str, CALLBACK_TYPE] = {}
         self._last_countdown: float | None = None
@@ -191,6 +206,16 @@ class FordAssistantController:
     def async_start(self) -> None:
         """Subscribe to everything."""
         e = self.entities
+        self._ready_at = dt_util.utcnow()
+        if not self.hass.is_running:
+
+            @callback
+            def _started(_event: Event) -> None:
+                self._ready_at = dt_util.utcnow()
+
+            self._unsubs.append(
+                self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _started)
+            )
         watch = {
             "lock": self._on_lock,
             "ignition": self._on_ignition,
@@ -626,11 +651,21 @@ class FordAssistantController:
         )
         self._notify_listeners()
 
-    async def _call(self, domain: str, service: str, role_or_entity: str) -> bool:
+    async def _call(
+        self,
+        domain: str,
+        service: str,
+        role_or_entity: str,
+        context: Context | None = None,
+    ) -> bool:
         entity_id = self.entities.get(role_or_entity, role_or_entity)
         try:
             await self.hass.services.async_call(
-                domain, service, {ATTR_ENTITY_ID: entity_id}, blocking=True
+                domain,
+                service,
+                {ATTR_ENTITY_ID: entity_id},
+                blocking=True,
+                context=context,
             )
         except HomeAssistantError as err:
             _LOGGER.warning("%s.%s on %s failed: %s", domain, service, entity_id, err)
@@ -1221,6 +1256,10 @@ class FordAssistantController:
         new, old = event.data["new_state"], event.data["old_state"]
         if new is None or old is None:
             return
+        if old.state in BAD_STATES or new.state in BAD_STATES:
+            # The Ford integration (re)connecting, for example after a restart,
+            # reports where the vehicle already is. That isn't an arrival.
+            return
         home = self._home()
         if self._in_zone(home, new) and not self._in_zone(home, old):
             self.hass.async_create_task(self._garage_open())
@@ -1238,12 +1277,58 @@ class FordAssistantController:
         ):
             await self._fuel_notification()
 
+    def _garage_skip_reason(self, garage: str) -> str | None:
+        """Why arriving home shouldn't open the garage now, or None to open it."""
+        now = dt_util.utcnow()
+        if (now - self._ready_at).total_seconds() < GARAGE_STARTUP_GRACE:
+            return "Home Assistant or Ford Assistant just started"
+        if "ignition" in self.entities and self._ignition_off():
+            # The vehicle is already parked: the arrival was reported late.
+            return "the vehicle is already parked"
+        state = self.hass.states.get(garage)
+        if state is not None and (
+            (now - state.last_changed).total_seconds() < GARAGE_RECENTLY_USED
+        ):
+            return "the garage door was used in the last few minutes"
+        if self._garage_opened_at is not None and (
+            (now - self._garage_opened_at).total_seconds() < GARAGE_RECENTLY_USED
+        ):
+            return "Ford Assistant opened it a few minutes ago"
+        return None
+
+    def _log_activity(self, entity_id: str, message: str, context: Context) -> None:
+        """Add a line to the Activity log, on the entity, credited to Ford Assistant."""
+        self.hass.bus.async_fire(
+            EVENT_LOGBOOK_ENTRY,
+            {
+                "name": f"Ford Assistant ({self.name})",
+                "message": message,
+                "entity_id": entity_id,
+                "domain": DOMAIN,
+            },
+            context=context,
+        )
+
     async def _garage_open(self) -> None:
         garage = self.options.get(CONF_GARAGE)
         if not (self.features["garage_open"] and garage and self._is(garage, "closed")):
             return
-        if await self._call("cover", "open_cover", garage):
-            self._record("garage_open", f"Garage opened for the {self.name}")
+        if reason := self._garage_skip_reason(garage):
+            _LOGGER.info(
+                "Not opening %s for the %s on arrival: %s", garage, self.name, reason
+            )
+            return
+        context = Context()
+        self._log_activity(
+            garage, f"opened the garage because the {self.name} arrived home", context
+        )
+        if await self._call("cover", "open_cover", garage, context):
+            self._garage_opened_at = dt_util.utcnow()
+            self._record(
+                "garage_open",
+                f"Garage opened for the {self.name}",
+                f"Ford Assistant opened the garage because the {self.name} arrived home.",
+            )
 
     async def _check_garage_close(self) -> None:
         garage = self.options.get(CONF_GARAGE)
@@ -1255,7 +1340,11 @@ class FordAssistantController:
             and self._in_zone(self._home())
         ):
             return
-        if await self._call("cover", "close_cover", garage):
+        context = Context()
+        self._log_activity(
+            garage, f"closed the garage because the {self.name} is parked", context
+        )
+        if await self._call("cover", "close_cover", garage, context):
             await self._notify(
                 "garage",
                 "Garage closed",

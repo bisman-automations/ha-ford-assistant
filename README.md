@@ -23,7 +23,7 @@ A companion to the [Ford integration](https://github.com/marq24/ha-fordpass) for
 - **Vehicle status Live Activity.** Optional: your vehicle's lock state, doors, fuel or battery, location and temperature, always on your lock screen.
 - **Alerts.** Alarm (critical), windows open with rain coming, low fuel, oil change (adds a to-do item), 12V battery, tire pressure, and dashboard warning lights. Each alert fires once, re-arms only after the problem clears, and is removed from your phone when it's resolved.
 - **Door open alert.** Tells you which door or the hood has been left open, as a time-sensitive notification that gets through Focus.
-- **Garage door.** Opens when the vehicle arrives home and closes a while after you park.
+- **Garage door.** Opens when the vehicle arrives home and closes a while after you park. It only opens for an arrival reported while you're still driving: not when Home Assistant or Ford Assistant has just started, not when the vehicle is already parked by the time its location catches up, and not when the door was opened or closed in the last 10 minutes. Each time Ford Assistant opens or closes the door, the garage door's **Activity** says Ford Assistant did it and why.
 - **Quiet hours.** Holds non-urgent alerts overnight and delivers them in the morning; the alarm and door alerts always get through.
 - **Electric and plug-in hybrid support.** Plug-in reminders, charging finished and charging fault alerts, and battery level in place of fuel.
 - **Actionable notifications.** **Lock**, **Honk & Flash**, **Start** and **Stop** buttons right in the notification.
