@@ -43,7 +43,10 @@ def test_text_follows_home_assistants_language():
     assert messages.door_name("fr", "frunk", "Frunk") == "Frunk"
 
 
-def test_french_translations_have_every_key():
-    en = json.loads((COMPONENT / "translations" / "en.json").read_text())
-    fr = json.loads((COMPONENT / "translations" / "fr.json").read_text())
-    assert _keys(fr) == _keys(en)
+def test_every_translation_has_every_key():
+    english = _keys(json.loads((COMPONENT / "translations" / "en.json").read_text()))
+    for path in sorted((COMPONENT / "translations").glob("*.json")):
+        if path.name == "en.json":
+            continue
+        translated = _keys(json.loads(path.read_text()))
+        assert translated == english, path.name

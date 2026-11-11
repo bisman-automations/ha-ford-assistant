@@ -1,0 +1,522 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "选择车辆",
+        "description": "选择一辆已由福特集成配置好的车辆。",
+        "data": {
+          "vin": "车辆"
+        }
+      },
+      "settings": {
+        "title": "提醒与地点",
+        "description": "选择谁接收通知，以及哪些地点需要注意。这些设置之后可以修改。",
+        "data": {
+          "notify_devices": "通知设备",
+          "phone_tracker": "你的手机",
+          "home_zone": "家区域",
+          "work_zone": "工作区域",
+          "weather_entity": "天气",
+          "todo_entity": "机油更换待办清单",
+          "garage_cover": "车库门"
+        },
+        "data_description": {
+          "notify_devices": "接收通知的手机，通知带有上锁、鸣笛、启动和停止按钮。",
+          "phone_tracker": "可选。自动上锁会等到这部手机离开车辆后才执行。",
+          "home_zone": "自动上锁只在此区域之外执行；预热和车库只在此区域之内执行。",
+          "work_zone": "可选。用于下班启动提醒和低油量提醒。",
+          "weather_entity": "可选。车窗未关淋雨提醒需要它。",
+          "todo_entity": "可选。机油寿命偏低时会添加一条机油更换待办。",
+          "garage_cover": "可选。到家时打开，停车后关闭。"
+        }
+      },
+      "import_blueprint": {
+        "title": "复制蓝图设置",
+        "description": "发现了这辆车的车辆助手蓝图自动化。要把它的手机、地点、功能、阈值和时间复制到 Ford Assistant 吗？",
+        "data": {
+          "automation": "从以下复制",
+          "disable_automation": "关闭蓝图自动化"
+        },
+        "data_description": {
+          "automation": "选择要复制的自动化，或从头开始。",
+          "disable_automation": "建议开启，避免每条通知收到两次。自动化会被关闭，不会被删除。"
+        }
+      }
+    },
+    "error": {
+      "missing_entities": "福特集成还没有为这辆车创建门锁和车辆追踪器。"
+    },
+    "abort": {
+      "no_vehicles": "未找到车辆。请先配置福特集成。",
+      "already_configured": "所有福特车辆都已配置 Ford Assistant。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ford Assistant 选项",
+        "description": "手机与地点、家庭中谁在驾驶，以及维修模式和借用模式允许做什么。",
+        "menu_options": {
+          "settings": "手机、地点与日程",
+          "household_drivers": "家庭成员驾驶员",
+          "service_mode": "维修模式",
+          "guest_mode": "借用模式"
+        }
+      },
+      "settings": {
+        "title": "手机、地点与日程",
+        "description": "谁接收通知、哪些地点需要注意，以及定时功能在哪些天运行。",
+        "data": {
+          "notify_devices": "通知设备",
+          "phone_tracker": "你的手机",
+          "home_zone": "家区域",
+          "work_zone": "工作区域",
+          "weather_entity": "天气",
+          "todo_entity": "机油更换待办清单",
+          "garage_cover": "车库门",
+          "precondition_days": "预热运行日",
+          "work_prompt_days": "下班提醒日",
+          "alarm_normal_states": "正常报警状态"
+        },
+        "data_description": {
+          "notify_devices": "接收通知的手机，通知带有上锁、鸣笛、启动和停止按钮。家庭成员驾驶员可以改用自己的手机。",
+          "phone_tracker": "可选。自动上锁会等到这部手机离开车辆后才执行。",
+          "home_zone": "自动上锁只在此区域之外执行；预热和车库只在此区域之内执行。",
+          "work_zone": "可选。用于下班启动提醒和低油量提醒。",
+          "weather_entity": "可选。车窗未关淋雨提醒需要它。",
+          "todo_entity": "可选。机油寿命偏低时会添加一条机油更换待办。",
+          "garage_cover": "可选。到家时打开，停车后关闭。",
+          "alarm_normal_states": "其它任何报警状态都会发送紧急通知。"
+        }
+      },
+      "household_drivers": {
+        "title": "家庭成员驾驶员",
+        "description": "Home Assistant 中会驾驶这辆车的人。当「谁在驾驶」为家庭模式且其中一人是当前驾驶员时，只使用此人的提醒、手机和操作权限。每个已关联 Home Assistant 用户的人也可以打开 Ford Assistant 仪表盘。",
+        "data": {
+          "household_drivers": "家庭成员驾驶员"
+        },
+        "data_description": {
+          "household_drivers": "只有这些人可以被选为当前驾驶员。留空则保持现有行为：每个功能跟随自己的开关，仪表盘权限仍归管理员以及管理员勾选过的人。"
+        }
+      },
+      "driver_profile": {
+        "title": "驾驶员档案",
+        "description": "{person} 的提醒、手机和操作。仅在此人作为当前驾驶员时生效。未勾选的提醒会被跳过，手机留空则使用车辆配置的手机，未勾选的操作即使开关打开也不会执行。",
+        "data": {
+          "alerts": "此人接收的提醒",
+          "notify_devices": "此人的手机",
+          "actions": "为此人启用的操作"
+        },
+        "data_description": {
+          "alerts": "勾选的提醒会在此人作为当前驾驶员时发送。",
+          "notify_devices": "可选。留空则使用为车辆配置的手机。",
+          "actions": "未勾选的操作会在此人作为当前驾驶员时被阻止。功能开关保持原样。"
+        }
+      },
+      "service_mode": {
+        "title": "维修模式",
+        "description": "用于进厂检修、换机油，或车辆正在维修的任何时候。勾选的提醒仍会发送，勾选的操作仍被允许；Ford Assistant 其它的动作都会被阻止。在你设定的时长之后可以自动切回家庭模式。",
+        "data": {
+          "service_alerts": "保留的提醒",
+          "service_actions": "允许的操作",
+          "service_revert": "之后恢复家庭模式"
+        },
+        "data_description": {
+          "service_alerts": "维修模式开启时，未勾选的提醒不会发送。默认保留全部提醒。",
+          "service_actions": "未勾选的操作会被阻止，包括自动上锁、远程启动和车库。默认阻止全部操作。向车辆请求最新状态永远不会被阻止。",
+          "service_revert": "可选。留空则一直保持维修模式直到有人修改。倒计时在重启后仍然有效。"
+        }
+      },
+      "guest_mode": {
+        "title": "借用模式",
+        "description": "用于借出或借来的车辆，或任何不属于家庭成员的驾驶员。勾选的提醒仍会发送，勾选的操作仍被允许。在你设定的时长之后可以自动切回家庭模式。",
+        "data": {
+          "guest_alerts": "保留的提醒",
+          "guest_actions": "允许的操作",
+          "guest_revert": "之后恢复家庭模式"
+        },
+        "data_description": {
+          "guest_alerts": "默认保留安全类提醒和车辆状态实时活动。机油寿命、插枪提醒和远程启动实时活动保持关闭。",
+          "guest_actions": "默认仍可上锁、解锁、鸣笛和自动上锁。夜间上锁、远程启动、早晨和下班流程以及车库都会被阻止。",
+          "guest_revert": "可选。留空则一直保持借用模式直到有人修改。倒计时在重启后仍然有效。"
+        }
+      }
+    }
+  },
+  "selector": {
+    "weekday": {
+      "options": {
+        "mon": "周一",
+        "tue": "周二",
+        "wed": "周三",
+        "thu": "周四",
+        "fri": "周五",
+        "sat": "周六",
+        "sun": "周日"
+      }
+    },
+    "import_choice": {
+      "options": {
+        "skip": "不复制，从头开始"
+      }
+    },
+    "driving_mode": {
+      "options": {
+        "household": "家庭",
+        "service": "维修",
+        "guest": "借用"
+      }
+    },
+    "driving_alert": {
+      "options": {
+        "alarm": "报警",
+        "windows": "车窗未关遇雨",
+        "fuel": "低油量",
+        "oil": "机油寿命",
+        "battery": "12V 电瓶",
+        "tires": "胎压",
+        "indicators": "故障灯",
+        "door": "车门未关",
+        "plugin": "插枪提醒",
+        "charge": "充电",
+        "status_activity": "车辆状态实时活动",
+        "remote_start_activity": "远程启动实时活动"
+      }
+    },
+    "driving_action": {
+      "options": {
+        "auto_lock": "离家自动上锁",
+        "night_lock": "夜间上锁",
+        "lock": "上锁",
+        "unlock": "解锁",
+        "honk": "鸣笛并闪灯",
+        "precondition": "早晨预热",
+        "work_prompt": "下班启动提醒",
+        "auto_extend": "自动延长远程启动",
+        "remote_start": "远程启动、停止与延长",
+        "garage_open": "到家打开车库",
+        "garage_close": "停车后关闭车库"
+      }
+    }
+  },
+  "entity": {
+    "switch": {
+      "auto_lock": {
+        "name": "离家自动上锁"
+      },
+      "precondition": {
+        "name": "早晨预热"
+      },
+      "work_prompt": {
+        "name": "下班启动提醒"
+      },
+      "auto_extend": {
+        "name": "自动延长远程启动"
+      },
+      "alarm_alert": {
+        "name": "报警提醒"
+      },
+      "windows_alert": {
+        "name": "车窗未关淋雨提醒"
+      },
+      "fuel_alert": {
+        "name": "低油量提醒"
+      },
+      "oil_alert": {
+        "name": "机油更换提醒"
+      },
+      "battery_alert": {
+        "name": "12V 电瓶提醒"
+      },
+      "tire_alert": {
+        "name": "胎压提醒"
+      },
+      "indicator_alert": {
+        "name": "故障灯提醒"
+      },
+      "garage_open": {
+        "name": "到家打开车库"
+      },
+      "garage_close": {
+        "name": "停车后关闭车库"
+      },
+      "night_lock": {
+        "name": "夜间上锁"
+      },
+      "door_open_alert": {
+        "name": "车门未关提醒"
+      },
+      "clear_resolved": {
+        "name": "清除已解决的通知"
+      },
+      "quiet_hours": {
+        "name": "免打扰时段"
+      },
+      "remote_start_activity": {
+        "name": "远程启动实时活动"
+      },
+      "plug_in_reminder": {
+        "name": "插枪提醒"
+      },
+      "charge_alert": {
+        "name": "充电提醒"
+      },
+      "status_activity": {
+        "name": "车辆状态实时活动"
+      },
+      "bridge_remote_start": {
+        "name": "远程启动"
+      }
+    },
+    "number": {
+      "auto_lock_delay": {
+        "name": "自动上锁延时"
+      },
+      "walk_away_distance": {
+        "name": "自动上锁离开距离"
+      },
+      "cold_threshold": {
+        "name": "低于此温度时启动"
+      },
+      "hot_threshold": {
+        "name": "高于此温度时启动"
+      },
+      "min_fuel_to_start": {
+        "name": "远程启动的最低油量"
+      },
+      "extend_below": {
+        "name": "低于此值延长远程启动"
+      },
+      "fuel_threshold": {
+        "name": "低油量阈值"
+      },
+      "oil_threshold": {
+        "name": "机油寿命阈值"
+      },
+      "battery_threshold": {
+        "name": "12V 电瓶阈值"
+      },
+      "garage_close_delay": {
+        "name": "车库关闭延时"
+      },
+      "door_open_delay": {
+        "name": "车门未关提醒延时"
+      },
+      "plug_in_below": {
+        "name": "低于此值提醒插枪"
+      }
+    },
+    "time": {
+      "precondition_time": {
+        "name": "预热时间"
+      },
+      "work_prompt_time": {
+        "name": "下班提醒时间"
+      },
+      "night_lock_time": {
+        "name": "夜间上锁时间"
+      },
+      "quiet_start": {
+        "name": "免打扰开始时间"
+      },
+      "quiet_end": {
+        "name": "免打扰结束时间"
+      },
+      "plug_in_time": {
+        "name": "插枪提醒时间"
+      }
+    },
+    "sensor": {
+      "bridge_ignition": {
+        "name": "点火状态"
+      },
+      "bridge_doors": {
+        "name": "车门"
+      },
+      "bridge_windows": {
+        "name": "车窗"
+      },
+      "bridge_tires": {
+        "name": "胎压"
+      },
+      "bridge_alarm": {
+        "name": "报警"
+      },
+      "bridge_fuel": {
+        "name": "燃油"
+      },
+      "bridge_soc": {
+        "name": "电量"
+      },
+      "bridge_ev_plug": {
+        "name": "充电枪"
+      },
+      "bridge_ev_charging": {
+        "name": "充电状态"
+      },
+      "last_event": {
+        "name": "助手最后事件"
+      },
+      "driving_status": {
+        "name": "驾驶状态",
+        "state": {
+          "household": "家庭",
+          "service": "维修",
+          "guest": "借用"
+        },
+        "state_attributes": {
+          "mode": {
+            "name": "模式"
+          },
+          "active_driver": {
+            "name": "当前驾驶员"
+          },
+          "active_driver_name": {
+            "name": "当前驾驶员姓名"
+          },
+          "manual_driver": {
+            "name": "手动指定"
+          },
+          "allowed_actions": {
+            "name": "允许的操作"
+          },
+          "blocked_actions": {
+            "name": "阻止的操作"
+          },
+          "kept_alerts": {
+            "name": "保留的提醒"
+          },
+          "dropped_alerts": {
+            "name": "已屏蔽的提醒"
+          },
+          "automations_suppressed": {
+            "name": "已抑制的自动化"
+          },
+          "revert_at": {
+            "name": "恢复家庭模式时间"
+          }
+        }
+      }
+    },
+    "select": {
+      "driving_mode": {
+        "name": "谁在驾驶",
+        "state": {
+          "household": "家庭",
+          "service": "维修",
+          "guest": "借用"
+        },
+        "state_attributes": {
+          "mode": {
+            "name": "模式"
+          },
+          "active_driver": {
+            "name": "当前驾驶员"
+          },
+          "active_driver_name": {
+            "name": "当前驾驶员姓名"
+          },
+          "manual_driver": {
+            "name": "手动指定"
+          },
+          "allowed_actions": {
+            "name": "允许的操作"
+          },
+          "blocked_actions": {
+            "name": "阻止的操作"
+          },
+          "kept_alerts": {
+            "name": "保留的提醒"
+          },
+          "dropped_alerts": {
+            "name": "已屏蔽的提醒"
+          },
+          "automations_suppressed": {
+            "name": "已抑制的自动化"
+          },
+          "revert_at": {
+            "name": "恢复家庭模式时间"
+          }
+        }
+      },
+      "active_driver": {
+        "name": "当前驾驶员",
+        "state": {
+          "none": "无人"
+        },
+        "state_attributes": {
+          "manual_driver": {
+            "name": "手动指定"
+          },
+          "active_driver_name": {
+            "name": "当前驾驶员姓名"
+          },
+          "in_effect": {
+            "name": "生效中"
+          }
+        }
+      }
+    },
+    "lock": {
+      "bridge_lock": {
+        "name": "车辆门锁"
+      }
+    },
+    "button": {
+      "bridge_honk": {
+        "name": "鸣笛并闪灯"
+      }
+    },
+    "binary_sensor": {
+      "automations_suppressed": {
+        "name": "自动化已抑制"
+      }
+    }
+  },
+  "exceptions": {
+    "missing_entities": {
+      "message": "福特集成的 {vin} 门锁或车辆追踪器尚不可用。"
+    },
+    "not_allowed": {
+      "message": "你没有 Ford Assistant 的访问权限。管理员可以在 Ford Assistant 仪表盘上为你授权，或把你添加为家庭成员驾驶员。"
+    },
+    "unknown_driver": {
+      "message": "{driver} 不是这辆车的家庭成员驾驶员。"
+    },
+    "unknown_mode": {
+      "message": "{mode} 不是驾驶模式。请使用 household、service 或 guest。"
+    },
+    "no_vehicle": {
+      "message": "请选择一辆已配置 Ford Assistant 的车辆。"
+    },
+    "action_blocked": {
+      "message": "{mode} 模式下不允许对该车辆执行 {action} 操作。"
+    }
+  },
+  "services": {
+    "set_driving_mode": {
+      "name": "设置谁在驾驶",
+      "description": "为车辆设置家庭、维修或借用模式。维修和借用可以在一定时长后恢复家庭模式。可选指定当前家庭成员驾驶员。",
+      "fields": {
+        "mode": {
+          "name": "模式",
+          "description": "家庭是日常驾驶。维修是进厂检修。借用是其他任何使用这辆车的人。"
+        },
+        "duration": {
+          "name": "之后恢复家庭模式",
+          "description": "保持维修或借用模式的时长。省略则使用车辆选项中的时长。设为 0 则一直保持，直到有人修改模式。"
+        },
+        "active_driver": {
+          "name": "当前驾驶员",
+          "description": "在选项中配置的家庭成员驾驶员；省略则保持当前驾驶员。这是手动选择，直到车辆停在家中为止。"
+        }
+      }
+    }
+  },
+  "issues": {
+    "missing_entities": {
+      "title": "Ford Assistant 找不到 {vehicle}",
+      "description": "Ford Assistant 需要福特集成中的这些实体：{entities}。请确认福特集成已配置且车辆实体已启用，然后重新加载 Ford Assistant。"
+    }
+  }
+}

@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import FordAssistantConfigEntry
+from .bridge import bridge_sensors
 from .driving import DRIVING_MODES
 from .entity import FordAssistantEntity
 
@@ -27,6 +28,7 @@ async def async_setup_entry(
         [
             LastEventSensor(controller, "last_event"),
             DrivingStatusSensor(controller),
+            *bridge_sensors(controller),
         ]
     )
 

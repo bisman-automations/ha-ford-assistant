@@ -16,6 +16,10 @@ SERVICE_SET_DRIVING_MODE: Final = "set_driving_mode"
 
 # Config entry data / options
 CONF_VIN: Final = "vin"
+# Which Ford integration the vehicle came from: "fordpass" (marq24) or
+# "fordpass_cn" (FordPass China). Missing means "fordpass", for entries made
+# before the China integration was supported.
+CONF_SOURCE: Final = "source"
 CONF_NOTIFY_DEVICES: Final = "notify_devices"
 CONF_PHONE_TRACKER: Final = "phone_tracker"
 CONF_HOME_ZONE: Final = "home_zone"

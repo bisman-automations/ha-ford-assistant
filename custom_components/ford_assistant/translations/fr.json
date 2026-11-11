@@ -263,6 +263,9 @@
       },
       "status_activity": {
         "name": "Activité en direct de l'état du véhicule"
+      },
+      "bridge_remote_start": {
+        "name": "Démarrage à distance"
       }
     },
     "number": {
@@ -324,6 +327,33 @@
       }
     },
     "sensor": {
+      "bridge_ignition": {
+        "name": "Allumage"
+      },
+      "bridge_doors": {
+        "name": "Portes"
+      },
+      "bridge_windows": {
+        "name": "Vitres"
+      },
+      "bridge_tires": {
+        "name": "Pression des pneus"
+      },
+      "bridge_alarm": {
+        "name": "Alarme"
+      },
+      "bridge_fuel": {
+        "name": "Carburant"
+      },
+      "bridge_soc": {
+        "name": "Batterie"
+      },
+      "bridge_ev_plug": {
+        "name": "Prise de recharge"
+      },
+      "bridge_ev_charging": {
+        "name": "Recharge"
+      },
       "last_event": {
         "name": "Dernier événement de l'assistant"
       },
@@ -335,16 +365,36 @@
           "guest": "Invité"
         },
         "state_attributes": {
-          "mode": { "name": "Mode" },
-          "active_driver": { "name": "Conducteur actif" },
-          "active_driver_name": { "name": "Nom du conducteur actif" },
-          "manual_driver": { "name": "Choisi à la main" },
-          "allowed_actions": { "name": "Actions autorisées" },
-          "blocked_actions": { "name": "Actions bloquées" },
-          "kept_alerts": { "name": "Alertes conservées" },
-          "dropped_alerts": { "name": "Alertes ignorées" },
-          "automations_suppressed": { "name": "Automatisations suspendues" },
-          "revert_at": { "name": "Retour au mode Foyer" }
+          "mode": {
+            "name": "Mode"
+          },
+          "active_driver": {
+            "name": "Conducteur actif"
+          },
+          "active_driver_name": {
+            "name": "Nom du conducteur actif"
+          },
+          "manual_driver": {
+            "name": "Choisi à la main"
+          },
+          "allowed_actions": {
+            "name": "Actions autorisées"
+          },
+          "blocked_actions": {
+            "name": "Actions bloquées"
+          },
+          "kept_alerts": {
+            "name": "Alertes conservées"
+          },
+          "dropped_alerts": {
+            "name": "Alertes ignorées"
+          },
+          "automations_suppressed": {
+            "name": "Automatisations suspendues"
+          },
+          "revert_at": {
+            "name": "Retour au mode Foyer"
+          }
         }
       }
     },
@@ -357,16 +407,36 @@
           "guest": "Invité"
         },
         "state_attributes": {
-          "mode": { "name": "Mode" },
-          "active_driver": { "name": "Conducteur actif" },
-          "active_driver_name": { "name": "Nom du conducteur actif" },
-          "manual_driver": { "name": "Choisi à la main" },
-          "allowed_actions": { "name": "Actions autorisées" },
-          "blocked_actions": { "name": "Actions bloquées" },
-          "kept_alerts": { "name": "Alertes conservées" },
-          "dropped_alerts": { "name": "Alertes ignorées" },
-          "automations_suppressed": { "name": "Automatisations suspendues" },
-          "revert_at": { "name": "Retour au mode Foyer" }
+          "mode": {
+            "name": "Mode"
+          },
+          "active_driver": {
+            "name": "Conducteur actif"
+          },
+          "active_driver_name": {
+            "name": "Nom du conducteur actif"
+          },
+          "manual_driver": {
+            "name": "Choisi à la main"
+          },
+          "allowed_actions": {
+            "name": "Actions autorisées"
+          },
+          "blocked_actions": {
+            "name": "Actions bloquées"
+          },
+          "kept_alerts": {
+            "name": "Alertes conservées"
+          },
+          "dropped_alerts": {
+            "name": "Alertes ignorées"
+          },
+          "automations_suppressed": {
+            "name": "Automatisations suspendues"
+          },
+          "revert_at": {
+            "name": "Retour au mode Foyer"
+          }
         }
       },
       "active_driver": {
@@ -375,15 +445,31 @@
           "none": "Personne"
         },
         "state_attributes": {
-          "manual_driver": { "name": "Choisi à la main" },
-          "active_driver_name": { "name": "Nom du conducteur actif" },
-          "in_effect": { "name": "En vigueur" }
+          "manual_driver": {
+            "name": "Choisi à la main"
+          },
+          "active_driver_name": {
+            "name": "Nom du conducteur actif"
+          },
+          "in_effect": {
+            "name": "En vigueur"
+          }
         }
       }
     },
     "binary_sensor": {
       "automations_suppressed": {
         "name": "Automatisations suspendues"
+      }
+    },
+    "lock": {
+      "bridge_lock": {
+        "name": "Verrouillage du véhicule"
+      }
+    },
+    "button": {
+      "bridge_honk": {
+        "name": "Klaxon et feux"
       }
     }
   },
@@ -402,6 +488,9 @@
     },
     "no_vehicle": {
       "message": "Choisissez un véhicule pour lequel Ford Assistant est configuré."
+    },
+    "action_blocked": {
+      "message": "Ford Assistant est en mode {mode}, il ne peut donc pas {action} ce véhicule."
     }
   },
   "services": {

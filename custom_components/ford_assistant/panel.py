@@ -163,7 +163,7 @@ def vehicle_summary(hass: HomeAssistant, entry) -> dict[str, Any]:
                 found[key] = entity_id
         return found
 
-    vehicle = ford_device(hass, vin)
+    vehicle = ford_device(hass, vin, controller.source)
     sensors = {
         key: entity_id
         for key in ("last_event", "driving_status")

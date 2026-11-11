@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
@@ -21,9 +23,12 @@ from .panel import (
     async_setup_websocket,
     async_unregister_panel_if_unused,
 )
+from .sources import SOURCE_CHINA, cn_entity
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.LOCK,
     Platform.NUMBER,
     Platform.SELECT,
     Platform.SENSOR,
@@ -32,6 +37,24 @@ PLATFORMS: list[Platform] = [
 ]
 
 type FordAssistantConfigEntry = ConfigEntry[FordAssistantController]
+
+
+def _platforms_for(controller: FordAssistantController) -> list[Platform]:
+    """The platforms this vehicle sets up, so unload matches setup.
+
+    Lock and button only carry bridge entities, which only a FordPass China
+    vehicle needs. Unloading them for the Ford integration would fail on the
+    minimum Home Assistant, where a platform that was never set up raises.
+    """
+    return [
+        platform
+        for platform in PLATFORMS
+        if platform not in (Platform.LOCK, Platform.BUTTON)
+        or controller.source == SOURCE_CHINA
+    ]
+
+
+_LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -98,6 +121,58 @@ async def _async_register_services(hass: HomeAssistant) -> None:
     )
 
 
+def _missing_china_readings(controller: FordAssistantController) -> list[str]:
+    """What a FordPass China vehicle still lacks before Ford Assistant can run."""
+    missing = [
+        role
+        for role in REQUIRED_ROLES
+        # The bridge lock only exists once the platforms have loaded.
+        if role != "lock" and role not in controller.entities
+    ]
+    missing.extend(
+        key
+        for key in ("lock_status", "lock_door", "unlock_door")
+        if not cn_entity(controller.hass, controller.vin, key)
+    )
+    return missing
+
+
+def _record_missing(
+    hass: HomeAssistant,
+    entry: FordAssistantConfigEntry,
+    issue_id: str,
+    missing: list[str],
+) -> None:
+    """Record the missing entities as a repair issue."""
+    ir.async_create_issue(
+        hass,
+        DOMAIN,
+        issue_id,
+        is_fixable=False,
+        severity=ir.IssueSeverity.ERROR,
+        translation_key="missing_entities",
+        translation_placeholders={
+            "vehicle": entry.title,
+            "entities": ", ".join(missing),
+        },
+    )
+
+
+def _raise_missing(
+    hass: HomeAssistant,
+    entry: FordAssistantConfigEntry,
+    issue_id: str,
+    missing: list[str],
+) -> None:
+    """Record the missing entities and postpone setup until they exist."""
+    _record_missing(hass, entry, issue_id, missing)
+    raise ConfigEntryNotReady(
+        translation_domain=DOMAIN,
+        translation_key="missing_entities",
+        translation_placeholders={"vin": entry.data[CONF_VIN]},
+    )
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: FordAssistantConfigEntry
 ) -> bool:
@@ -107,28 +182,31 @@ async def async_setup_entry(
     await controller.async_load()
 
     issue_id = f"missing_entities_{entry.entry_id}"
-    if missing := [role for role in REQUIRED_ROLES if role not in controller.entities]:
-        ir.async_create_issue(
-            hass,
-            DOMAIN,
-            issue_id,
-            is_fixable=False,
-            severity=ir.IssueSeverity.ERROR,
-            translation_key="missing_entities",
-            translation_placeholders={
-                "vehicle": entry.title,
-                "entities": ", ".join(missing),
-            },
-        )
-        raise ConfigEntryNotReady(
-            translation_domain=DOMAIN,
-            translation_key="missing_entities",
-            translation_placeholders={"vin": entry.data[CONF_VIN]},
-        )
-    ir.async_delete_issue(hass, DOMAIN, issue_id)
+    # FordPass China has no lock entity: Ford Assistant provides one, so only
+    # the readings that bridge needs are checked before the platforms load.
+    missing = (
+        _missing_china_readings(controller)
+        if controller.source == SOURCE_CHINA
+        else [role for role in REQUIRED_ROLES if role not in controller.entities]
+    )
+    if missing:
+        _raise_missing(hass, entry, issue_id, missing)
 
     entry.runtime_data = controller
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(
+        entry, _platforms_for(controller)
+    )
+    # The bridge entities exist now, so roles can be resolved for real.
+    await controller.async_refresh_entities()
+    if missing := [role for role in REQUIRED_ROLES if role not in controller.entities]:
+        # The platforms are already loaded; keep the entry up but report it.
+        _LOGGER.error(
+            "%s: Ford Assistant is missing %s", entry.title, ", ".join(missing)
+        )
+        _record_missing(hass, entry, issue_id, missing)
+    else:
+        ir.async_delete_issue(hass, DOMAIN, issue_id)
+
     controller.async_start()
     entry.async_on_unload(controller.async_stop)
     # Re-check who may see the sidebar: a household driver who isn't an admin
@@ -143,7 +221,9 @@ async def async_unload_entry(
     """Unload a config entry."""
     await entry.runtime_data.async_flush()
     async_unregister_panel_if_unused(hass, entry.entry_id)
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    return await hass.config_entries.async_unload_platforms(
+        entry, _platforms_for(entry.runtime_data)
+    )
 
 
 async def async_remove_entry(

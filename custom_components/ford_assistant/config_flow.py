@@ -30,6 +30,7 @@ from .const import (
     CONF_SERVICE_ACTIONS,
     CONF_SERVICE_ALERTS,
     CONF_SERVICE_REVERT,
+    CONF_SOURCE,
     CONF_TODO,
     CONF_VIN,
     CONF_WEATHER,
@@ -50,6 +51,7 @@ from .driving import (
     SERVICE_DEFAULT_ALERTS,
 )
 from .importer import BlueprintSettings, find_blueprint_automations
+from .sources import SOURCE_CHINA, SOURCE_FORDPASS, SOURCE_LABELS, cn_entity
 
 CONF_AUTOMATION = "automation"
 CONF_DISABLE_AUTOMATION = "disable_automation"
@@ -157,6 +159,8 @@ class FordAssistantConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialise the flow."""
         self._vin: str | None = None
+        self._source: str = SOURCE_FORDPASS
+        self._vehicle_name: str | None = None
         self._blueprints: list[BlueprintSettings] = []
         self._import: BlueprintSettings | None = None
         self._disable_automation = False
@@ -167,24 +171,40 @@ class FordAssistantConfigFlow(ConfigFlow, domain=DOMAIN):
         """Choose the vehicle."""
         configured = {e.unique_id for e in self._async_current_entries()}
         vehicles = {
-            vin: name
-            for vin, name in ford_vehicles(self.hass).items()
-            if vin not in configured
+            token: vehicle
+            for token, vehicle in ford_vehicles(self.hass).items()
+            if vehicle.unique_id not in configured
         }
         if not vehicles:
             reason = "already_configured" if configured else "no_vehicles"
             return self.async_abort(reason=reason)
 
+        # Say which Ford integration a vehicle comes from when both are present.
+        show_source = len({vehicle.source for vehicle in vehicles.values()}) > 1
+
         errors: dict[str, str] = {}
         if user_input is not None:
-            vin = user_input[CONF_VIN]
-            await self.async_set_unique_id(vin)
+            token = user_input[CONF_VIN]
+            vehicle = vehicles.get(token)
+            if vehicle is None:
+                return self.async_abort(reason="no_vehicles")
+            source = vehicle.source
+            await self.async_set_unique_id(vehicle.unique_id)
             self._abort_if_unique_id_configured()
-            entities = resolve_entities(self.hass, vin)
-            if "lock" not in entities or "tracker" not in entities:
+            entities = resolve_entities(self.hass, token, source)
+            if source == SOURCE_CHINA:
+                supported = "tracker" in entities and all(
+                    cn_entity(self.hass, token, key)
+                    for key in ("lock_status", "lock_door", "unlock_door")
+                )
+            else:
+                supported = "lock" in entities and "tracker" in entities
+            if not supported:
                 errors["base"] = "missing_entities"
             else:
-                self._vin = vin
+                self._vin = token
+                self._source = source
+                self._vehicle_name = vehicle.name
                 self._blueprints = find_blueprint_automations(
                     self.hass, entities.get("lock")
                 )
@@ -199,8 +219,15 @@ class FordAssistantConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_VIN): selector.SelectSelector(
                         selector.SelectSelectorConfig(
                             options=[
-                                selector.SelectOptionDict(value=vin, label=name)
-                                for vin, name in vehicles.items()
+                                selector.SelectOptionDict(
+                                    value=token,
+                                    label=(
+                                        f"{vehicle.name} · {SOURCE_LABELS[vehicle.source]}"
+                                        if show_source
+                                        else vehicle.name
+                                    ),
+                                )
+                                for token, vehicle in vehicles.items()
                             ]
                         )
                     )
@@ -251,7 +278,7 @@ class FordAssistantConfigFlow(ConfigFlow, domain=DOMAIN):
         assert self._vin is not None
         imported = self._import.options if self._import else {}
         if user_input is not None:
-            data: dict[str, Any] = {CONF_VIN: self._vin}
+            data: dict[str, Any] = {CONF_VIN: self._vin, CONF_SOURCE: self._source}
             if self._import:
                 data["imported"] = self._import.stored()
                 if self._disable_automation:
@@ -262,7 +289,7 @@ class FordAssistantConfigFlow(ConfigFlow, domain=DOMAIN):
                         blocking=True,
                     )
             return self.async_create_entry(
-                title=ford_vehicles(self.hass).get(self._vin, self._vin),
+                title=self._vehicle_name or self._vin,
                 data=data,
                 options={
                     CONF_PRECONDITION_DAYS: imported.get(

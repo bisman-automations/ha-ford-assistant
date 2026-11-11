@@ -400,3 +400,17 @@ async def test_existing_split_device_is_adopted(hass: HomeAssistant, ford: str) 
     assert (
         len(dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)) == 1
     )
+
+
+async def test_unload_with_lock_and_button_loaded(
+    hass: HomeAssistant, ford: str
+) -> None:
+    """Unloading a Ford entry must not unload platforms it never set up."""
+    from homeassistant.setup import async_setup_component
+
+    entry = await _setup(hass, ford)
+    # Another integration's lock or button entities load these components.
+    assert await async_setup_component(hass, "lock", {})
+    assert await async_setup_component(hass, "button", {})
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()

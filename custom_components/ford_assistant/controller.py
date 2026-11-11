@@ -105,6 +105,7 @@ from .logic import (
     tire_summary,
     to_float,
 )
+from .sources import CN_EV_KEYS, SOURCE_CHINA, cn_entity, source_of
 from .status import StatusActivity
 
 _LOGGER = logging.getLogger(__name__)
@@ -130,8 +131,10 @@ class FordAssistantController:
         self.hass = hass
         self.entry = entry
         self.vin: str = entry.data[CONF_VIN]
+        self.source: str = source_of(entry)
         self.version: str | None = None
         self.entities: dict[str, str] = {}
+        self.cn: dict[str, str] = {}
         self.features: dict[str, bool] = dict(FEATURES)
         self.numbers: dict[str, float] = {k: s.default for k, s in NUMBERS.items()}
         self.times: dict[str, time] = {
@@ -179,7 +182,7 @@ class FordAssistantController:
     @property
     def name(self) -> str:
         """Vehicle display name."""
-        return vehicle_name(ford_device(self.hass, self.vin), self.vin)
+        return vehicle_name(ford_device(self.hass, self.vin, self.source), self.vin)
 
     @property
     def options(self) -> dict[str, Any]:
@@ -223,12 +226,39 @@ class FordAssistantController:
                         pass
             self._save()
         self._forget_stale_driver()
-        self.entities = resolve_entities(self.hass, self.vin)
+        self.async_resolve()
+        self.cn = {
+            key: entity_id
+            for key in CN_EV_KEYS
+            if (entity_id := cn_entity(self.hass, self.vin, key))
+        }
+
+    @callback
+    def async_resolve(self) -> None:
+        """Re-read which entities back each role.
+
+        Called again after the platforms are set up, because the bridge entities
+        a FordPass China vehicle needs only exist from then on.
+        """
+        self.entities = resolve_entities(self.hass, self.vin, self.source)
+
+    async def async_refresh_entities(self) -> None:
+        """Resolve roles once the platforms (and their bridge entities) exist."""
+        self.async_resolve()
+        self.cn = {
+            key: entity_id
+            for key in CN_EV_KEYS
+            if (entity_id := cn_entity(self.hass, self.vin, key))
+        }
 
     @property
     def is_electric(self) -> bool:
         """Electric or plug-in hybrid (the Ford integration made EV sensors)."""
-        return any(role in self.entities for role in EV_ROLES)
+        if any(role in self.entities for role in EV_ROLES):
+            return True
+        return self.source == SOURCE_CHINA and any(
+            cn_entity(self.hass, self.vin, key) for key in CN_EV_KEYS
+        )
 
     @callback
     def async_start(self) -> None:
@@ -949,7 +979,7 @@ class FordAssistantController:
 
     def _tap_url(self) -> str | None:
         """Tapping a notification opens the vehicle's device page."""
-        if device := ford_device(self.hass, self.vin):
+        if device := ford_device(self.hass, self.vin, self.source):
             return f"/config/devices/device/{device.id}"
         return None
 

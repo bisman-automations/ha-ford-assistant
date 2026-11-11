@@ -63,6 +63,9 @@
       },
       "status_activity": {
         "default": "mdi:car-connected"
+      },
+      "bridge_remote_start": {
+        "default": "mdi:engine"
       }
     },
     "number": {
@@ -129,6 +132,33 @@
       },
       "driving_status": {
         "default": "mdi:steering"
+      },
+      "bridge_ignition": {
+        "default": "mdi:engine"
+      },
+      "bridge_doors": {
+        "default": "mdi:car-door"
+      },
+      "bridge_windows": {
+        "default": "mdi:window-closed"
+      },
+      "bridge_tires": {
+        "default": "mdi:car-tire-alert"
+      },
+      "bridge_alarm": {
+        "default": "mdi:alarm"
+      },
+      "bridge_fuel": {
+        "default": "mdi:fuel"
+      },
+      "bridge_soc": {
+        "default": "mdi:battery-high"
+      },
+      "bridge_ev_plug": {
+        "default": "mdi:power-plug"
+      },
+      "bridge_ev_charging": {
+        "default": "mdi:power-plug"
       }
     },
     "select": {
@@ -142,6 +172,16 @@
     "binary_sensor": {
       "automations_suppressed": {
         "default": "mdi:robot-off"
+      }
+    },
+    "lock": {
+      "bridge_lock": {
+        "default": "mdi:lock"
+      }
+    },
+    "button": {
+      "bridge_honk": {
+        "default": "mdi:car-light-high"
       }
     }
   }
