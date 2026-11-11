@@ -11,8 +11,10 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import FordAssistantConfigEntry
 from .access import async_ensure_allowed
+from .bridge import RemoteStart
 from .const import EV_FEATURES, FEATURES
 from .entity import FordAssistantEntity
+from .sources import SOURCE_CHINA, cn_entity
 
 # Coordinator or push updates; nothing polls on its own.
 PARALLEL_UPDATES = 0
@@ -25,11 +27,14 @@ async def async_setup_entry(
 ) -> None:
     """Set up feature switches."""
     controller = entry.runtime_data
-    async_add_entities(
+    entities = [
         FeatureSwitch(controller, key)
         for key in FEATURES
         if controller.is_electric or key not in EV_FEATURES
-    )
+    ]
+    if controller.source == SOURCE_CHINA and cn_entity(hass, controller.vin, "engine"):
+        entities.append(RemoteStart(controller))
+    async_add_entities(entities)
 
 
 class FeatureSwitch(FordAssistantEntity, SwitchEntity):

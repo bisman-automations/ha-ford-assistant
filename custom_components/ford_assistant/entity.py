@@ -5,7 +5,7 @@ from __future__ import annotations
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity import Entity
 
-from .const import DOMAIN, FORD_DOMAIN
+from .const import DOMAIN
 from .controller import FordAssistantController
 from .discovery import ford_device
 
@@ -17,9 +17,9 @@ def device_info(controller: FordAssistantController) -> DeviceInfo:
     identifier, so each shows the other under "Linked devices".
     """
     vin = controller.vin
-    vehicle = ford_device(controller.hass, vin)
+    vehicle = ford_device(controller.hass, vin, controller.source)
     return DeviceInfo(
-        identifiers={(DOMAIN, vin), (FORD_DOMAIN, vin)},
+        identifiers={(DOMAIN, vin), (controller.source, vin)},
         name=controller.name,
         manufacturer=(vehicle.manufacturer if vehicle else None) or "Ford",
         model="Ford Assistant",
