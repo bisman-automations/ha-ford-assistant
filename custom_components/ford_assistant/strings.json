@@ -263,6 +263,9 @@
       },
       "status_activity": {
         "name": "Vehicle status Live Activity"
+      },
+      "bridge_remote_start": {
+        "name": "Remote start"
       }
     },
     "number": {
@@ -324,6 +327,33 @@
       }
     },
     "sensor": {
+      "bridge_ignition": {
+        "name": "Ignition"
+      },
+      "bridge_doors": {
+        "name": "Doors"
+      },
+      "bridge_windows": {
+        "name": "Windows"
+      },
+      "bridge_tires": {
+        "name": "Tire pressure"
+      },
+      "bridge_alarm": {
+        "name": "Alarm"
+      },
+      "bridge_fuel": {
+        "name": "Fuel"
+      },
+      "bridge_soc": {
+        "name": "Battery"
+      },
+      "bridge_ev_plug": {
+        "name": "Charging plug"
+      },
+      "bridge_ev_charging": {
+        "name": "Charging"
+      },
       "last_event": {
         "name": "Assistant last event"
       },
@@ -335,16 +365,36 @@
           "guest": "Guest"
         },
         "state_attributes": {
-          "mode": { "name": "Mode" },
-          "active_driver": { "name": "Active driver" },
-          "active_driver_name": { "name": "Active driver name" },
-          "manual_driver": { "name": "Chosen by hand" },
-          "allowed_actions": { "name": "Allowed actions" },
-          "blocked_actions": { "name": "Blocked actions" },
-          "kept_alerts": { "name": "Alerts kept" },
-          "dropped_alerts": { "name": "Alerts dropped" },
-          "automations_suppressed": { "name": "Automations suppressed" },
-          "revert_at": { "name": "Returns to Household" }
+          "mode": {
+            "name": "Mode"
+          },
+          "active_driver": {
+            "name": "Active driver"
+          },
+          "active_driver_name": {
+            "name": "Active driver name"
+          },
+          "manual_driver": {
+            "name": "Chosen by hand"
+          },
+          "allowed_actions": {
+            "name": "Allowed actions"
+          },
+          "blocked_actions": {
+            "name": "Blocked actions"
+          },
+          "kept_alerts": {
+            "name": "Alerts kept"
+          },
+          "dropped_alerts": {
+            "name": "Alerts dropped"
+          },
+          "automations_suppressed": {
+            "name": "Automations suppressed"
+          },
+          "revert_at": {
+            "name": "Returns to Household"
+          }
         }
       }
     },
@@ -357,16 +407,36 @@
           "guest": "Guest"
         },
         "state_attributes": {
-          "mode": { "name": "Mode" },
-          "active_driver": { "name": "Active driver" },
-          "active_driver_name": { "name": "Active driver name" },
-          "manual_driver": { "name": "Chosen by hand" },
-          "allowed_actions": { "name": "Allowed actions" },
-          "blocked_actions": { "name": "Blocked actions" },
-          "kept_alerts": { "name": "Alerts kept" },
-          "dropped_alerts": { "name": "Alerts dropped" },
-          "automations_suppressed": { "name": "Automations suppressed" },
-          "revert_at": { "name": "Returns to Household" }
+          "mode": {
+            "name": "Mode"
+          },
+          "active_driver": {
+            "name": "Active driver"
+          },
+          "active_driver_name": {
+            "name": "Active driver name"
+          },
+          "manual_driver": {
+            "name": "Chosen by hand"
+          },
+          "allowed_actions": {
+            "name": "Allowed actions"
+          },
+          "blocked_actions": {
+            "name": "Blocked actions"
+          },
+          "kept_alerts": {
+            "name": "Alerts kept"
+          },
+          "dropped_alerts": {
+            "name": "Alerts dropped"
+          },
+          "automations_suppressed": {
+            "name": "Automations suppressed"
+          },
+          "revert_at": {
+            "name": "Returns to Household"
+          }
         }
       },
       "active_driver": {
@@ -375,10 +445,26 @@
           "none": "Nobody"
         },
         "state_attributes": {
-          "manual_driver": { "name": "Chosen by hand" },
-          "active_driver_name": { "name": "Active driver name" },
-          "in_effect": { "name": "In effect" }
+          "manual_driver": {
+            "name": "Chosen by hand"
+          },
+          "active_driver_name": {
+            "name": "Active driver name"
+          },
+          "in_effect": {
+            "name": "In effect"
+          }
         }
+      }
+    },
+    "lock": {
+      "bridge_lock": {
+        "name": "Vehicle lock"
+      }
+    },
+    "button": {
+      "bridge_honk": {
+        "name": "Honk and flash"
       }
     },
     "binary_sensor": {
@@ -402,6 +488,9 @@
     },
     "no_vehicle": {
       "message": "Choose a vehicle that has Ford Assistant set up."
+    },
+    "action_blocked": {
+      "message": "Ford Assistant is in {mode} mode, so it can't {action} this vehicle."
     }
   },
   "services": {

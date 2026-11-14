@@ -13,6 +13,8 @@
 
 A companion to the [Ford integration](https://github.com/marq24/ha-fordpass) for Home Assistant. It turns your Ford or Lincoln's entities into ready-to-use features, each one a switch you can flip from a dashboard or your own automations.
 
+It also works with [FordPass China](https://github.com/RockJesus/ha-fordpass-cn): pick the car from either integration during setup, and everything below — alerts, dashboard, Live Activities and Who's driving — runs on the readings that integration provides.
+
 - **Sidebar dashboard.** A Ford Assistant page in the sidebar with your vehicle's picture, its status at a glance, one-tap controls and every Ford Assistant feature switch.
 - **Auto-lock away from home.** Locks the doors if they're left unlocked with the ignition off and doors closed, optionally waiting until your phone has walked away.
 - **Lock at night.** Locks it at bedtime wherever it's parked, or tells you which door is open.
@@ -34,8 +36,28 @@ A companion to the [Ford integration](https://github.com/marq24/ha-fordpass) for
 ## Requirements
 
 - Home Assistant 2026.8 or newer.
-- The [Ford integration](https://github.com/marq24/ha-fordpass) set up with your vehicle.
+- The [Ford integration](https://github.com/marq24/ha-fordpass) or [FordPass China](https://github.com/RockJesus/ha-fordpass-cn) set up with your vehicle.
 - The Home Assistant Companion app on the phones that should get notifications.
+
+## FordPass China
+
+FordPass China splits the car over many entities and reports them in Chinese; it also has no lock entity, using separate lock and unlock action buttons instead. Ford Assistant adds a few **bridge entities** to a FordPass China vehicle so the rest of the integration sees the shapes it was built for:
+
+| Bridge entity | Built from |
+| --- | --- |
+| Vehicle lock | Lock status sensor, lock and unlock action buttons |
+| Doors | Driver, passenger and rear door sensors, tailgate, hood |
+| Windows | The four window sensors and the sunroof |
+| Tire pressure | The four tire pressure and tire status sensors |
+| Alarm | Alarm status sensor |
+| Ignition, Remote start | Ignition sensor, engine switch |
+| Fuel, Battery | Fuel level and electric range, charge level and range |
+| Charging plug, Charging | Plug status and charging status sensors |
+| Honk and flash | Honk switch |
+
+Refresh, location, odometer, oil life, the remote-start countdown and the vehicle picture come straight from the FordPass China entities.
+
+FordPass China has no 12V battery percentage, outside temperature or dashboard warning-light count, so the 12V battery alert, the temperature check in morning pre-conditioning and the warning-light alert stay out. Everything else works as it does with the Ford integration.
 
 ## Installation
 
