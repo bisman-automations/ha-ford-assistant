@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-11-14
+
+### Added
+
+- **FordPass China.** Ford Assistant now also works with the [FordPass China](https://github.com/RockJesus/ha-fordpass-cn) integration: pick the car from either integration during setup. Alerts, the sidebar dashboard, Live Activities and Who's driving run on its readings. Because FordPass China splits the car over many entities, reports them in Chinese and has no lock entity, Ford Assistant adds a few bridge entities for such a car: a vehicle lock (from its lock status and lock and unlock buttons), and doors, windows, tire pressure, alarm, ignition, remote start, fuel, battery, charging and a honk-and-flash button. FordPass China has no 12V battery percentage, outside temperature or warning-light count, so those three checks are left out for it. Thanks to RockJesus for this.
+- **Simplified Chinese.** Ford Assistant's setup, settings, entity names and repair messages are now also in Simplified Chinese. Notifications and the sidebar dashboard are still in English.
+
 ## [1.7.2] - 2026-11-14
 
 ### Changed
@@ -156,6 +163,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Actionable notifications with Lock, Honk & Flash, Start and Stop buttons.
 - Feature switches, number and time settings on the vehicle's device, a last-event sensor, a `ford_assistant_alert` event, a repair issue for missing Ford entities, and diagnostics.
 
+[1.8.0]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.7.2...v1.8.0
 [1.7.2]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.7.1...v1.7.2
 [1.7.1]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.6.4...v1.7.0

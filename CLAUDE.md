@@ -8,6 +8,8 @@ renamed the app, though the domain is still `fordpass`.
 
 ## Ground rules
 
+- **FordPass China** (`fordpass_cn`, https://github.com/RockJesus/ha-fordpass-cn) is the second source (1.8.0). The same rules apply to it: entity states, attributes and service calls only. Its readings reach the rest of Ford Assistant through the bridge entities, so features don't need a second code path.
+
 - **Never import from or patch the Ford integration.** Only use its public surface:
   entity states and attributes, and service calls (`lock.lock`, `switch.turn_on`,
   `button.press`, …).
@@ -40,6 +42,8 @@ renamed the app, though the domain is still `fordpass`.
 | `frontend/ford-assistant-panel.js` | The dashboard web component. Plain JS with no build step or external libraries; it renders from the live `hass` object and calls services through it. |
 | `logic.py` | Pure helpers with no HA state access; put testable logic here. |
 | `discovery.py` | Finds Ford vehicles, the Ford device and the Ford entities. |
+| `sources.py` | Which integration a vehicle comes from: the Ford integration (`fordpass`) or FordPass China (`fordpass_cn`, unique ids `{sha256(vin)}-{key}`), and where its entities are. Reads the entity registry only. |
+| `bridge.py`, `bridge_logic.py`, `lock.py`, `button.py` | FordPass China only: bridge entities that combine its per-door, per-window and per-wheel readings (in Chinese) into the Ford integration's shapes, plus a lock built from its lock status and lock/unlock buttons. `bridge_logic.py` is pure. Lock and button platforms load only for a FordPass China vehicle (`_platforms_for` in `__init__.py`, used by setup and unload alike). |
 | `compat.py` | Device registry helpers that work before and after HA 2026.8. |
 | `importer.py` | Converts blueprint automation inputs into Ford Assistant settings. |
 | `entity.py` | Base entity and `device_info()`. |
@@ -78,7 +82,7 @@ renamed the app, though the domain is still `fordpass`.
   `percent_alert`, `state_alert` in `logic.py`). Clearing a latch clears the notification.
 - Live Activity payloads follow the Companion app docs
   (https://companion.home-assistant.io/docs/notifications/live-activities/), with the same
-  shape as the `ha-appliance-live-activity` integration: `live_update`, `tag`,
+  shape as the `ha-appliance-mgmt` integration: `live_update`, `tag`,
   `critical_text`, `progress`/`progress_max`, `chronometer` + `when` + `when_relative`.
   **iOS Live Activities don't support action buttons** (Android does), iOS ends them after
   8 hours, and frequent updates get throttled. So only push on visible changes and let
