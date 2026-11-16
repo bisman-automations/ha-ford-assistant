@@ -73,30 +73,48 @@ class ActiveDriverSelect(FordAssistantEntity, SelectEntity):
         """Initialise the select."""
         super().__init__(controller, "active_driver")
 
+    def _labels(self) -> dict[str, str]:
+        """Each eligible person's name (what the list shows) and their person
+        entity. Two people with the same name get "(2)" after the second."""
+        labels: dict[str, str] = {}
+        for entity_id in self.controller.household_drivers:
+            state = self.hass.states.get(entity_id) if self.hass else None
+            name = (state.name if state else None) or entity_id
+            label, count = name, 2
+            while label in labels or label == ACTIVE_DRIVER_NONE:
+                label, count = f"{name} ({count})", count + 1
+            labels[label] = entity_id
+        return labels
+
     @property
     def options(self) -> list[str]:
-        """Nobody, then each eligible household person."""
-        return [ACTIVE_DRIVER_NONE, *self.controller.household_drivers]
+        """Nobody, then each eligible household person, by name."""
+        return [ACTIVE_DRIVER_NONE, *self._labels()]
 
     @property
     def current_option(self) -> str:
-        """The active driver, or nobody."""
-        return self.controller.active_driver or ACTIVE_DRIVER_NONE
+        """The active driver's name, or nobody."""
+        driver = self.controller.active_driver
+        if driver is None:
+            return ACTIVE_DRIVER_NONE
+        for label, entity_id in self._labels().items():
+            if entity_id == driver:
+                return label
+        return ACTIVE_DRIVER_NONE
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Whether the choice was made by hand, and the driver's name."""
+        """Whether the choice was made by hand, the driver's name and person."""
         return {
             "manual_driver": self.controller.active_driver_manual,
             "active_driver_name": self.controller.active_driver_name,
+            # The person entity, for automations (the state is their name).
+            "person": self.controller.active_driver,
             "in_effect": self.controller.driving_mode == "household",
         }
 
     async def async_select_option(self, option: str) -> None:
-        """Set the driver by hand."""
+        """Set the driver by hand (a name from the list)."""
         await async_ensure_allowed(self.hass, self._context)
-        self.controller.set_active_driver(
-            None if option == ACTIVE_DRIVER_NONE else option,
-            manual=True,
-            reason="manual",
-        )
+        driver = None if option == ACTIVE_DRIVER_NONE else self._labels().get(option)
+        self.controller.set_active_driver(driver, manual=True, reason="manual")

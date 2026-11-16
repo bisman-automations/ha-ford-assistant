@@ -170,7 +170,7 @@ Under **Settings → Devices & services → Ford Assistant → Configure → Hou
 - **Their phones.** Leave this empty to use the phones chosen for the vehicle. Otherwise alerts for this driver go only to these phones.
 - **Actions enabled for them.** Unchecked actions don't run, even if the feature switch is on.
 
-**Active driver** lists those people, plus **Nobody**. With nobody selected, every feature follows its own switch.
+**Active driver** lists those people by name, plus **Nobody**. In automations, its `person` attribute is the person entity, and the **Set driving mode** action takes a person to make them the active driver. With nobody selected, every feature follows its own switch.
 
 Ford Assistant fills **Active driver** when it can:
 

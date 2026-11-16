@@ -387,11 +387,8 @@ async def test_options_cover_drivers_profiles_and_both_modes(
     ]
 
     select = hass.states.get(_ours(hass, "select", "active_driver"))
-    assert select.attributes["options"] == [
-        "none",
-        "person.driver_one",
-        "person.driver_two",
-    ]
+    # Shown by name (1.8.1); the person entity is an attribute.
+    assert select.attributes["options"] == ["none", "Driver One", "Driver Two"]
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
     result = await hass.config_entries.options.async_configure(
@@ -499,7 +496,7 @@ async def test_driver_profile_limits_alerts_phones_and_actions(
         "select_option",
         {
             "entity_id": _ours(hass, "select", "active_driver"),
-            "option": "person.driver_one",
+            "option": "Driver One",
         },
         blocking=True,
     )
@@ -630,10 +627,13 @@ async def test_a_manual_driver_is_not_replaced(hass: HomeAssistant, ford: str) -
         "select_option",
         {
             "entity_id": _ours(hass, "select", "active_driver"),
-            "option": "person.driver_two",
+            "option": "Driver Two",
         },
         blocking=True,
     )
+    select = hass.states.get(_ours(hass, "select", "active_driver"))
+    assert select.state == "Driver Two"
+    assert select.attributes["person"] == "person.driver_two"
     hass.states.async_set("person.driver_one", "not_home")
     await hass.async_block_till_done()
     hass.states.async_set(_entity_id("tracker"), "not_home", AWAY)
@@ -732,3 +732,27 @@ async def test_precondition_does_not_start_in_service_mode(
     await _mode(hass, "service")
     await entry.runtime_data._precondition()
     assert len(starts) == 1
+
+
+def test_driver_labels_are_names_and_unique() -> None:
+    """1.8.1: the list shows names; two people with one name stay apart."""
+    from types import SimpleNamespace
+
+    from custom_components.ford_assistant.select import ActiveDriverSelect
+
+    states = {
+        "person.a": SimpleNamespace(name="Alex"),
+        "person.b": SimpleNamespace(name="Alex"),
+        "person.c": SimpleNamespace(name="none"),
+    }
+    select = ActiveDriverSelect.__new__(ActiveDriverSelect)
+    select.hass = SimpleNamespace(states=SimpleNamespace(get=states.get))
+    select.controller = SimpleNamespace(
+        household_drivers=["person.a", "person.b", "person.c", "person.d"]
+    )
+    assert select._labels() == {  # noqa: SLF001
+        "Alex": "person.a",
+        "Alex (2)": "person.b",
+        "none (2)": "person.c",
+        "person.d": "person.d",
+    }
