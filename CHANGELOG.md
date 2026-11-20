@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.2] - 2026-11-20
+
+### Fixed
+
+- **README languages.** The README now says that setup, settings, entity names and repair messages are also in Simplified Chinese, as they have been since 1.8.0; notifications and the dashboard are still in English.
+
+### Changed
+
+- **Ruff 0.17.6.** Linting uses the current Ruff release.
+
 ## [1.8.1] - 2026-11-15
 
 ### Changed
@@ -169,6 +179,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Actionable notifications with Lock, Honk & Flash, Start and Stop buttons.
 - Feature switches, number and time settings on the vehicle's device, a last-event sensor, a `ford_assistant_alert` event, a repair issue for missing Ford entities, and diagnostics.
 
+[1.8.2]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.7.2...v1.8.0
 [1.7.2]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.7.1...v1.7.2

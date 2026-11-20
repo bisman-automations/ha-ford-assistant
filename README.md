@@ -262,7 +262,7 @@ To be easy on your phone, it only updates when something you'd see changes. Lock
 
 ## Languages
 
-Ford Assistant is in English and French.
+Ford Assistant is in English and French. Setup, settings, entity names and repair messages are also in Simplified Chinese; its notifications and the dashboard are still in English.
 
 - **Setup, settings and the dashboard** follow each person's own language in Home Assistant (their profile).
 - **Notifications and Live Activities** follow Home Assistant's language (**Settings → System → General**), since they go to phones rather than to one person's screen.

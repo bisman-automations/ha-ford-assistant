@@ -49,7 +49,7 @@ renamed the app, though the domain is still `fordpass`.
 | `entity.py` | Base entity and `device_info()`. |
 | `switch.py` / `number.py` / `time.py` / `sensor.py` / `select.py` / `binary_sensor.py` | Feature switches, thresholds/delays, schedule times, last-event and driving-status sensors, Who's driving and Active driver selects, automations-suppressed binary sensor. |
 | `const.py` | Domain, Ford keys, `FEATURES`, `NUMBERS`, `TIMES`, defaults. |
-| `strings.json` + `translations/en.json` | UI text. **Keep the two identical.** `translations/fr.json` has the same keys in French (`tests/test_messages.py` checks). |
+| `strings.json` + `translations/en.json` | UI text. **Keep the two identical.** `translations/fr.json` (French) and `translations/zh-Hans.json` (Simplified Chinese, UI text only) have the same keys (`tests/test_messages.py` checks). |
 | `messages.py` | Notification and Live Activity text by language (`MESSAGES`, picked by `hass.config.language`, English fallback). The controller and `status.py` use `controller._t(key, ...)`; never write user-facing text inline. The dashboard's words are `WORDS` in the panel script (`_t`, by the viewer's language); keep the French in both the same where they overlap. |
 | `icons.json` | One icon per entity translation key. |
 | `brand/` | Integration icons (`icon`, `dark_icon`, each at 1x and @2x). |
