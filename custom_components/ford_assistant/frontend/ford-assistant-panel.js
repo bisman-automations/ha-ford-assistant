@@ -8,6 +8,11 @@
  */
 
 const STORAGE_KEY = "ford-assistant-panel:vehicle";
+
+// Whether the page can't be seen (another tab, or a screen that's off).
+function pageHidden() {
+  return typeof document !== "undefined" && Boolean(document.hidden);
+}
 const PENDING_TIMEOUT = 45000; // Ford commands can take 30+ seconds
 // Locking waits for the vehicle to report back, which can take longer.
 const LOCK_TIMEOUT = 90000;
@@ -317,7 +322,44 @@ class FordAssistantPanel extends HTMLElement {
     this._hass = hass;
     if (first) this._load();
     this._resolvePending();
+    // Home Assistant sends a new hass on every state change in the house:
+    // look further only when one of this vehicle's own entities changed, and
+    // not at all while nobody can see the page (it catches up when seen).
+    if (!this._ownChanged() && !first) return;
     this._render();
+  }
+
+  // Whether a state the page shows has a new state object since the last look.
+  _ownChanged() {
+    if (pageHidden()) {
+      this._staleView = true;
+      this._whenVisible();
+      return false;
+    }
+    const vehicle = this._vehicle;
+    if (vehicle !== this._ownVehicle) {
+      this._ownVehicle = vehicle;
+      this._ownIds = vehicle ? this._signatureIds(vehicle) : [];
+      this._ownStates = null;
+    }
+    const states = this._ownIds.map((id) => this._state(id));
+    const before = this._ownStates;
+    this._ownStates = states;
+    const changed = this._staleView || !before || states.some((s, i) => s !== before[i]);
+    this._staleView = false;
+    return changed;
+  }
+
+  // Draw once when a hidden page is seen again.
+  _whenVisible() {
+    if (this._onVisible) return;
+    this._onVisible = () => {
+      if (pageHidden() || !this._staleView) return;
+      this._staleView = false;
+      this._ownStates = null;
+      this._render();
+    };
+    document.addEventListener("visibilitychange", this._onVisible);
   }
 
   get hass() {
@@ -341,6 +383,10 @@ class FordAssistantPanel extends HTMLElement {
   disconnectedCallback() {
     for (const pending of this._pending.values()) clearTimeout(pending.timer);
     this._pending.clear();
+    if (this._onVisible) {
+      document.removeEventListener("visibilitychange", this._onVisible);
+      this._onVisible = null;
+    }
   }
 
   // ----------------------------------------------------------------- data
@@ -461,17 +507,23 @@ class FordAssistantPanel extends HTMLElement {
     return unit ? `${state.state} ${unit}` : state.state;
   }
 
-  _signatureFor(vehicle) {
-    if (!vehicle) return "";
-    const ids = [
+  _signatureIds(vehicle) {
+    return [
       ...Object.values(vehicle.ford),
       ...Object.values(vehicle.assistant.switch),
       ...Object.values(vehicle.assistant.number),
       ...Object.values(vehicle.assistant.sensor),
+      ...Object.values(vehicle.assistant.select || {}),
+      ...Object.values(vehicle.assistant.time || {}),
+      ...Object.values(vehicle.assistant.binary_sensor || {}),
       vehicle.garage,
       vehicle.home_zone,
     ];
-    return ids
+  }
+
+  _signatureFor(vehicle) {
+    if (!vehicle) return "";
+    return this._signatureIds(vehicle)
       .map((id) => {
         const s = this._state(id);
         return s ? `${id}=${s.state}@${s.last_updated}` : `${id}=`;

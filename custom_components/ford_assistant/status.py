@@ -54,6 +54,7 @@ DEBOUNCE = 5  # seconds: the Ford integration updates many sensors at once
 MINOR_INTERVAL = timedelta(minutes=5)  # at most one quiet update per 5 minutes
 RESTART_AFTER = timedelta(hours=7, minutes=45)  # iOS ends activities at 8 hours
 BAD = (STATE_UNKNOWN, STATE_UNAVAILABLE, None)
+END_TOLERANCE = 120  # seconds: a remote start end time closer than this isn't re-sent
 
 
 @dataclass(frozen=True)
@@ -290,9 +291,16 @@ class StatusActivity:
                 if state
                 else None
             )
-            if minutes and minutes > 0:
-                end = dt_util.utcnow() + timedelta(minutes=minutes)
+            if state and minutes and minutes > 0:
+                # From when the countdown last changed, not from now: the Ford
+                # integration doesn't report it every minute, and a fuel,
+                # location or temperature update in between must not move
+                # the end time (each move was a full, non-silent push).
+                end = state.last_updated + timedelta(minutes=minutes)
                 running_until = int(end.timestamp()) // 60 * 60
+                shown = self._last_view.running_until if self._last_view else None
+                if shown and abs(running_until - shown) <= END_TOLERANCE:
+                    running_until = shown  # the phone's countdown is still right
 
         return StatusView(
             headline=headline,

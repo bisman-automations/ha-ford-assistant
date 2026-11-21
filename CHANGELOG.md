@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.3] - 2026-11-20
+
+### Changed
+
+- **Fewer remote start updates on the status Live Activity.** While the car ran after a remote start, any other reading in between (outside temperature, fuel, location) moved the "running until" time a minute or two later and sent a full update to your phone each time. The end time now comes from when the car last reported its countdown, so it only changes, and only buzzes your phone, when the countdown really jumps (an extension, for example). The countdown on the phone is also a little more accurate.
+- **A lighter dashboard.** The Ford Assistant dashboard now looks for changes only in your vehicle's own entities, instead of on every change anywhere in Home Assistant, and stops redrawing in a hidden browser tab or on a switched-off screen, catching up once when it's seen again. It also follows Who's driving, Active driver and Automations suppressed right away.
+
 ## [1.8.2] - 2026-11-20
 
 ### Fixed
@@ -179,6 +186,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Actionable notifications with Lock, Honk & Flash, Start and Stop buttons.
 - Feature switches, number and time settings on the vehicle's device, a last-event sensor, a `ford_assistant_alert` event, a repair issue for missing Ford entities, and diagnostics.
 
+[1.8.3]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.2...v1.8.3
 [1.8.2]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.0...v1.8.1
 [1.8.0]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.7.2...v1.8.0

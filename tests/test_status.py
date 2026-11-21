@@ -96,7 +96,8 @@ async def test_remote_start_shown_in_status(
 
     latest = _status(notify_calls)[-1].data["data"]
     assert latest["critical_text"] == "Running"
-    assert latest["chronometer"] and 840 <= latest["when"] <= 900
+    # Counted from when the countdown was reported, to the whole minute
+    assert latest["chronometer"] and 830 <= latest["when"] <= 900
     assert [a["title"] for a in latest["actions"]] == ["Lock", "Stop"]
     # No separate remote start activity while the status one is on.
     assert not [
@@ -152,3 +153,41 @@ async def test_status_at_home_and_doors(
     latest = _status(notify_calls)[-1]
     assert latest.data["data"]["critical_text"] == "Door open"
     assert latest.data["message"].startswith("🚪 Tailgate open · 🔒 Locked")
+
+
+async def test_remote_start_end_time_holds_between_countdown_reports(
+    hass: HomeAssistant, ford: str, freezer: FrozenDateTimeFactory
+) -> None:
+    """Other updates during a remote start don't move the end time, so they
+    don't send a new (non-silent) Live Activity update every time."""
+    async_mock_service(hass, "lock", "lock")
+    notify_calls = async_mock_service(hass, "notify", "mobile_app_my_phone")
+    entry = await _setup(hass, ford)
+    entry.runtime_data.set_feature("status_activity", True)
+    await hass.async_block_till_done()
+
+    hass.states.async_set(_entity_id("countdown"), "15", {"unit_of_measurement": "min"})
+    hass.states.async_set(_entity_id("remote_start"), "on")
+    await _later(hass, freezer, seconds=6)
+    sent = len(_status(notify_calls))
+
+    # Three minutes on, the countdown hasn't been reported again, but the
+    # outside temperature has: the phone's countdown is still right.
+    await _later(hass, freezer, minutes=3)
+    hass.states.async_set(_entity_id("temperature"), "21")
+    await _later(hass, freezer, seconds=6)
+    loud = [c for c in _status(notify_calls)[sent:] if not c.data["data"].get("silent")]
+    assert loud == []
+
+    # The countdown reports again on schedule: still nothing new to show.
+    hass.states.async_set(_entity_id("countdown"), "12", {"unit_of_measurement": "min"})
+    await _later(hass, freezer, seconds=6)
+    loud = [c for c in _status(notify_calls)[sent:] if not c.data["data"].get("silent")]
+    assert loud == []
+
+    # An extension moves the end time: sent right away.
+    hass.states.async_set(_entity_id("countdown"), "25", {"unit_of_measurement": "min"})
+    await _later(hass, freezer, seconds=6)
+    latest = _status(notify_calls)[-1].data["data"]
+    assert "silent" not in latest
+    assert 1430 <= latest["when"] <= 1500

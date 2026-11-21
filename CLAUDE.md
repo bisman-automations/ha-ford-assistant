@@ -84,6 +84,8 @@ renamed the app, though the domain is still `fordpass`.
   (https://companion.home-assistant.io/docs/notifications/live-activities/), with the same
   shape as the `ha-appliance-mgmt` integration: `live_update`, `tag`,
   `critical_text`, `progress`/`progress_max`, `chronometer` + `when` + `when_relative`.
+  The status activity's remote start end time is the countdown state's `last_updated` plus
+  its minutes, and is kept while a new estimate is within `END_TOLERANCE` (status.py).
   **iOS Live Activities don't support action buttons** (Android does), iOS ends them after
   8 hours, and frequent updates get throttled. So only push on visible changes and let
   `chronometer` count down on the phone.
@@ -124,6 +126,7 @@ sharing an identifier or connection are shown as **Linked devices**.
   HA's own `ha-icon` / `ha-menu-button`, so it themes and works offline. Keep it dependency-free.
 - It asks the backend once for vehicles and entity IDs (`ford_assistant/vehicles`); everything
   else comes from `hass.states`. Add new Ford roles to `FORD_ENTITY_KEYS` and they're sent along.
+- `set hass` only goes on to `_render` when `_ownChanged()` (a new state object for any id in `_signatureIds`, the same list the render signature uses); while `pageHidden()` it waits and draws once on `visibilitychange`. `tests/test_panel_frontend.mjs` (Node, stubbed DOM) checks this.
 - Unlock, remote start and opening the garage must confirm first. Button entities sit at
   `unknown` until pressed, so only treat `unavailable` as unusable.
 - The vehicles payload includes the Who's driving select. The panel reads its live
