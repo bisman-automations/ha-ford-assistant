@@ -272,7 +272,7 @@ To add a language, translate `translations/en.json` into `translations/<language
 
 ## Diagnostics
 
-**Settings → Devices & services → Ford Assistant → ⋮ → Download diagnostics** includes the matched Ford entities and their states, with the VIN and locations redacted.
+**Settings → Devices & services → Ford Assistant → ⋮ → Download diagnostics** includes the matched Ford entities and their states, with the VIN, locations and your phone tracker redacted. Household drivers show as `person.driver_1`, `person.driver_2` and so on instead of their names.
 ## Troubleshooting
 
 ### Diagnostics and debug logs

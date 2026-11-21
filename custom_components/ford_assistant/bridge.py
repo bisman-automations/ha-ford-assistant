@@ -94,7 +94,9 @@ class BridgeEntity(FordAssistantEntity):
 
     @callback
     def _source_changed(self, _event: Event[EventStateChangedData]) -> None:
-        self.async_write_ha_state()
+        # Several readings feed one bridge entity, and an update to one of
+        # them often leaves the combined value as it was.
+        self._async_updated()
 
     @property
     def available(self) -> bool:

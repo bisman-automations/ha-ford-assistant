@@ -1243,10 +1243,19 @@ class FordAssistantController:
     @callback
     def _on_lock(self, event: Event[EventStateChangedData]) -> None:
         new = event.data["new_state"]
+        old = event.data["old_state"]
         if new is not None and new.state == "unlocked":
+            if self._same_state(old, new) and "auto_lock" in self._timers:
+                # Only the attributes moved: the wait already running stands.
+                return
             self._start_timer("auto_lock", self._auto_lock_delay, self._check_auto_lock)
         elif new is not None and new.state == "locked":
             self._cancel_timer("auto_lock")
+
+    @staticmethod
+    def _same_state(old: State | None, new: State) -> bool:
+        """Whether an update changed only the attributes, not the state."""
+        return old is not None and old.state == new.state
 
     @callback
     def _on_ignition(self, event: Event[EventStateChangedData]) -> None:
@@ -1291,8 +1300,13 @@ class FordAssistantController:
             self._cancel_timer("door_recheck")
             self._door_rechecked = False
             self._latch("door", (False, False))
-            # Doors just closed while unlocked: restart the wait.
-            if self._is(self.entities.get("lock"), "unlocked"):
+            # Doors just closed while unlocked: restart the wait. An update
+            # that only changed the attributes (one door's detail) leaves a
+            # running wait alone, or it could keep the car from ever locking.
+            if self._is(self.entities.get("lock"), "unlocked") and not (
+                self._same_state(event.data["old_state"], new)
+                and "auto_lock" in self._timers
+            ):
                 self._start_timer(
                     "auto_lock", self._auto_lock_delay, self._check_auto_lock
                 )

@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.4] - 2026-11-21
+
+### Changed
+
+- **Less work for Home Assistant.** Changing a setting or sending an alert no longer rewrites every Ford Assistant entity, only the ones whose value changed. FordPass China cars' combined entities (lock, doors, tires and so on) are also only written when what they show changes.
+
+### Fixed
+
+- **Auto-lock no longer waits longer than it should.** An update from the car that only changed a detail (one door's lock or position) while it stayed unlocked, or while the doors stayed closed, started the auto-lock wait over. With frequent updates the car could stay unlocked well past the delay you set. The wait now starts over only when the car is unlocked or a door is closed.
+
+### Security
+
+- **Diagnostics leave out household drivers' names.** Downloaded diagnostics now show household drivers as `person.driver_1`, `person.driver_2` and so on, and leave out the active driver's name and your phone tracker, so the file is safer to attach to an issue.
+
 ## [1.8.3] - 2026-11-20
 
 ### Changed
@@ -186,6 +200,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Actionable notifications with Lock, Honk & Flash, Start and Stop buttons.
 - Feature switches, number and time settings on the vehicle's device, a last-event sensor, a `ford_assistant_alert` event, a repair issue for missing Ford entities, and diagnostics.
 
+[1.8.4]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.2...v1.8.3
 [1.8.2]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.1...v1.8.2
 [1.8.1]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.0...v1.8.1
