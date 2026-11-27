@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] - 2026-11-27
+
+### Fixed
+
+- **Renaming a Ford entity no longer restarts Ford Assistant.** Giving one of the Ford integration's vehicle entities a new name, icon or area (or the Ford integration refreshing its own details) restarted Ford Assistant, which started its waits over, such as the auto-lock delay. It now restarts only when one of those entities gets a new entity ID or is removed.
+
 ## [1.9.0] - 2026-11-27
 
 ### Added
@@ -206,6 +212,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Actionable notifications with Lock, Honk & Flash, Start and Stop buttons.
 - Feature switches, number and time settings on the vehicle's device, a last-event sensor, a `ford_assistant_alert` event, a repair issue for missing Ford entities, and diagnostics.
 
+[1.9.1]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.4...v1.9.0
 [1.8.4]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.2...v1.8.3

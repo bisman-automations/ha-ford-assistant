@@ -306,7 +306,7 @@ class FordAssistantController:
         self._unsubs.append(
             async_track_time_change(self.hass, self._on_hourly, minute=0, second=0)
         )
-        # Reload if someone renames one of the Ford entities we watch.
+        # Reload if one of the entities we watch gets a new entity ID or is removed.
         self._unsubs.append(
             async_track_entity_registry_updated_event(
                 self.hass, list(e.values()), self._on_registry_update
@@ -2103,5 +2103,11 @@ class FordAssistantController:
 
     @callback
     def _on_registry_update(self, event: Event) -> None:
-        if event.data.get("action") in ("update", "remove"):
+        # Only a new entity ID or a removed entity changes what we watch. A new
+        # name, icon or area (or the Ford integration refreshing an entry's
+        # details) leaves the entity IDs alone, so it doesn't need a reload.
+        action = event.data.get("action")
+        if action == "remove" or (
+            action == "update" and "entity_id" in event.data.get("changes", {})
+        ):
             self.hass.config_entries.async_schedule_reload(self.entry.entry_id)
