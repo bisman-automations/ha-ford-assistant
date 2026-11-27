@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-11-27
+
+### Added
+
+- **Use alert buttons with a tap on iPhone.** The Home Assistant app on iPhone, iPad and Mac can now show a notification's buttons when you tap it (its **Show actions when tapped** setting), but only when tapping doesn't already open a page. Ford Assistant's alerts opened the vehicle's page, so the setting did nothing for them. On those phones, alerts with buttons (Lock, Honk & Flash, Start, Stop, Extend) now leave the tap to the app and have an **Open** button for the vehicle's page. Android phones and the remote start Live Activity are unchanged.
+
 ## [1.8.4] - 2026-11-21
 
 ### Changed
@@ -200,6 +206,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Actionable notifications with Lock, Honk & Flash, Start and Stop buttons.
 - Feature switches, number and time settings on the vehicle's device, a last-event sensor, a `ford_assistant_alert` event, a repair issue for missing Ford entities, and diagnostics.
 
+[1.9.0]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.4...v1.9.0
 [1.8.4]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.2...v1.8.3
 [1.8.2]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.1...v1.8.2

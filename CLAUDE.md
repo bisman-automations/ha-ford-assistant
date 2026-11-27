@@ -76,6 +76,7 @@ renamed the app, though the domain is still `fordpass`.
   the last-event sensor and tracking what's shown so `_clear(kind)` can remove it later.
 - Notify targets come from the selected Companion app devices (`notify.mobile_app_*`
   services), looked up from the mobile_app config entry's `device_name`.
+- `_deliver` sends per phone (`_notify_targets`). The Apple Companion app (mobile_app entry `os_name`, `logic.is_apple`) gets `logic.for_apple`: an alert with buttons and a tap URL (not a Live Activity) drops `url`/`clickAction` and adds a `URI` **Open** button (`action_open`), because the iOS app shows buttons on tap only when the tap opens nothing (home-assistant/iOS#5873).
 - Urgency: `critical=True` only for the alarm; `time_sensitive=True` for door alerts and
   charging faults; everything else is normal and can be held during quiet hours.
 - Latched alerts fire once and re-arm when the condition clears (`_latch`,

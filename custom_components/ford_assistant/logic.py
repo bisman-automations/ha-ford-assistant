@@ -177,3 +177,33 @@ def notify_service_name(device_name: str) -> str:
     from homeassistant.util import slugify  # local import keeps this module light
 
     return f"mobile_app_{slugify(device_name)}"
+
+
+# Apple's Companion app treats url, uri and clickAction as what a tap does,
+# and then never shows a notification's buttons on tap, even with its "Show
+# actions when tapped" setting on (home-assistant/iOS#5873).
+APPLE_SYSTEMS = frozenset({"ios", "ipados", "macos", "watchos", "visionos"})
+
+
+def is_apple(os_name: Any) -> bool:
+    """True for the Companion app on an iPhone, iPad, Mac or Watch."""
+    return str(os_name or "").lower() in APPLE_SYSTEMS
+
+
+def for_apple(payload: dict[str, Any], open_title: str) -> dict[str, Any]:
+    """The payload for an Apple device: its buttons show when it's tapped.
+
+    A notification with buttons and a page to open drops the page from the
+    tap and gets an Open button for it instead. Anything else (no buttons,
+    no page, a Live Activity) is returned as it is.
+    """
+    data = payload.get("data") or {}
+    url = data.get("url") or data.get("clickAction")
+    if not data.get("actions") or not url or data.get("live_update"):
+        return payload
+    changed = {k: v for k, v in data.items() if k not in ("url", "clickAction", "uri")}
+    changed["actions"] = [
+        *data["actions"],
+        {"action": "URI", "title": open_title, "uri": url},
+    ]
+    return {**payload, "data": changed}

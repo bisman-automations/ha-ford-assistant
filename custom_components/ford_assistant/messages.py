@@ -80,6 +80,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "action_start": "Start",
         "action_stop": "Stop",
         "action_extend": "Extend",
+        "action_open": "Open",
         "extended": "{name} remote start extended",
         "command_sent": "{command} sent to {name}",
         # 12V battery and tires
@@ -182,6 +183,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "action_start": "Démarrer",
         "action_stop": "Arrêter",
         "action_extend": "Prolonger",
+        "action_open": "Ouvrir",
         "extended": "Démarrage à distance de {name} prolongé",
         "command_sent": "{command} : envoyé à {name}",
         "battery_12v_title": "🔋 {name} : batterie 12 V faible",

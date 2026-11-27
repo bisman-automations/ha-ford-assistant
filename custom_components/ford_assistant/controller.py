@@ -93,8 +93,10 @@ from .logic import (
     action_id,
     active_indicators,
     countdown_minutes,
+    for_apple,
     humanize,
     in_quiet_hours,
+    is_apple,
     notify_service_name,
     open_doors,
     parse_action,
@@ -1055,7 +1057,11 @@ class FordAssistantController:
         Read from the mobile_app config entry rather than the device name, so
         renaming the phone's device in HA doesn't break notifications.
         """
-        services: list[str] = []
+        return [service for service, _apple in self._notify_targets()]
+
+    def _notify_targets(self) -> list[tuple[str, bool]]:
+        """(notify service, whether it's the Apple Companion app) per phone."""
+        targets: list[tuple[str, bool]] = []
         devices = dr.async_get(self.hass)
         for device_id in self._notify_device_ids():
             device = devices.async_get(device_id)
@@ -1068,8 +1074,10 @@ class FordAssistantController:
                     and entry.domain == "mobile_app"
                     and (name := entry.data.get("device_name"))
                 ):
-                    services.append(notify_service_name(name))
-        return services
+                    targets.append(
+                        (notify_service_name(name), is_apple(entry.data.get("os_name")))
+                    )
+        return targets
 
     def _notify_device_ids(self) -> list[str]:
         """Phones for the active driver, or the vehicle's phones.
@@ -1144,13 +1152,14 @@ class FordAssistantController:
         ]
 
     async def _deliver(self, payload: dict[str, Any]) -> None:
-        for service in self._notify_services():
+        for service, apple in self._notify_targets():
             if not self.hass.services.has_service("notify", service):
                 _LOGGER.warning("Notify service notify.%s not found", service)
                 continue
+            sent = for_apple(payload, self._t("action_open")) if apple else payload
             try:
                 await self.hass.services.async_call(
-                    "notify", service, payload, blocking=True
+                    "notify", service, sent, blocking=True
                 )
             except HomeAssistantError as err:
                 _LOGGER.warning("Could not notify via %s: %s", service, err)
