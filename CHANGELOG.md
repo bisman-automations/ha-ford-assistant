@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.2] - 2026-11-27
+
+### Changed
+
+- **The dashboard opens faster.** Your browser now keeps the Ford Assistant dashboard's script instead of downloading it again every time you open the page. After an update it loads the new one, as before.
+
 ## [1.9.1] - 2026-11-27
 
 ### Fixed
@@ -212,6 +218,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Actionable notifications with Lock, Honk & Flash, Start and Stop buttons.
 - Feature switches, number and time settings on the vehicle's device, a last-event sensor, a `ford_assistant_alert` event, a repair issue for missing Ford entities, and diagnostics.
 
+[1.9.2]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.4...v1.9.0
 [1.8.4]: https://github.com/bisman-automations/ha-ford-assistant/compare/v1.8.3...v1.8.4
